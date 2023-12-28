@@ -1,2 +1,4 @@
 *.db
 /bin/*
+/.idea/
+/download/
