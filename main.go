@@ -19,7 +19,8 @@ import (
 )
 
 type NexusRequest struct {
-	Items []Item `json:"items"`
+	Items             []Item `json:"items"`
+	ContinuationToken string `json:"continuationToken"`
 }
 
 type Item struct {
@@ -114,69 +115,80 @@ func UploadNexusData() {
 			DB.Where(Nexus{DownloadURL: v.DownloadURL}).Updates(Nexus{UpLoadStatus: true})
 			log.Printf("上传成功成功%s \n", v.DownloadURL)
 		}
+		log.Printf("上传文件至nexus完成!\n")
 	}
 }
 
 func UpdateNexusData() {
 
-	url := "http://172.30.86.46:18081/service/rest/v1/components?repository=maven-public"
 	method := "GET"
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
+	cTK := ""
 	// 无线循环
 	for {
 		// 隔10秒请求一次
 		time.Sleep(10 * time.Second)
 		log.Printf("开始更新数据库\n")
+		for {
+			url := "http://172.30.86.46:18081/service/rest/v1/components?repository=maven-public"
+			if cTK != "" {
+				url = fmt.Sprintf("%s&&continuationToken=%s", url, cTK)
+			}
+			fmt.Println(url)
+			req, err := http.NewRequest(method, url, nil)
 
-		req, err := http.NewRequest(method, url, nil)
+			if err != nil {
+				log.Printf("%s\n", err)
+				continue
+			}
+			req.Header.Add("accept", "application/json")
 
-		if err != nil {
-			log.Printf("%s\n", err)
-			continue
-		}
-		req.Header.Add("accept", "application/json")
-
-		res, err := client.Do(req)
-		if err != nil {
-			log.Printf("%s\n", err)
-			continue
-		}
-		var t NexusRequest
-		err = json.NewDecoder(res.Body).Decode(&t)
-		if err != nil {
-			log.Printf("%s\n", err)
-		}
-		if err != nil {
-			log.Printf("failed to connect database: %s", err)
-		}
-		//db.Create(&Nexus{DownloadURL: v.DownloadURL, GroupID: v.Maven2.GroupID, ArtifactID: v.Maven2.ArtifactID, Version: v.Maven2.Version})
-		//db.Create(&Nexus{DownloadURL: "v.DownloadURL"})
-		err = res.Body.Close()
-		if err != nil {
-			log.Println(err)
-		}
-		for _, item := range t.Items {
-			//fmt.Println(v.DownloadURL)
-			// 不存在URL则新建目录
-			for _, asset := range item.Assets {
-				DB.Where(Nexus{DownloadURL: asset.DownloadURL}).FirstOrCreate(&Nexus{
-					DownloadURL: asset.DownloadURL,
-					Path:        asset.Path,
-					GroupID:     asset.Maven2.GroupID,
-					ArtifactID:  asset.Maven2.ArtifactID,
-					Version:     asset.Maven2.Version,
-					Extension:   asset.Maven2.Extension,
-				})
-				//err := HttpGet(v.DownloadURL, v.Path)
-				if err != nil {
-					log.Printf("%s\n", err)
-				}
+			res, err := client.Do(req)
+			if err != nil {
+				log.Printf("%s\n", err)
+				continue
+			}
+			var t NexusRequest
+			err = json.NewDecoder(res.Body).Decode(&t)
+			if err != nil {
+				log.Printf("%s\n", err)
 			}
 
+			//db.Create(&Nexus{DownloadURL: v.DownloadURL, GroupID: v.Maven2.GroupID, ArtifactID: v.Maven2.ArtifactID, Version: v.Maven2.Version})
+			//db.Create(&Nexus{DownloadURL: "v.DownloadURL"})
+			err = res.Body.Close()
+			if err != nil {
+				log.Println(err)
+			}
+			for _, item := range t.Items {
+				//fmt.Println(v.DownloadURL)
+				// 不存在URL则新建目录
+				for _, asset := range item.Assets {
+					DB.Where(Nexus{DownloadURL: asset.DownloadURL}).FirstOrCreate(&Nexus{
+						DownloadURL: asset.DownloadURL,
+						Path:        asset.Path,
+						GroupID:     asset.Maven2.GroupID,
+						ArtifactID:  asset.Maven2.ArtifactID,
+						Version:     asset.Maven2.Version,
+						Extension:   asset.Maven2.Extension,
+					})
+					//err := HttpGet(v.DownloadURL, v.Path)
+					if err != nil {
+						log.Printf("%s\n", err)
+					}
+				}
+
+			}
+			fmt.Println(cTK)
+			cTK = t.ContinuationToken
+			fmt.Println(cTK)
+			if cTK == "" {
+				break
+			}
 		}
-		log.Printf("数据库更新完成\n")
+		log.Printf("数据库更新完成!\n")
 	}
 }
 
@@ -186,8 +198,8 @@ func HttpPost(groupId string,
 	filePath string,
 	extension string,
 ) error {
-	//url := "http://172.30.86.46:18081/service/rest/v1/components?repository=test-upload"
-	url := "http://10.147.235.204:8081/service/rest/v1/components?repository=maven-public"
+	url := "http://172.30.86.46:18081/service/rest/v1/components?repository=test-upload"
+	//url := "http://10.147.235.204:8081/service/rest/v1/components?repository=maven-public"
 
 	method := "POST"
 
@@ -282,12 +294,6 @@ func init() {
 func main() {
 	DB.AutoMigrate(&Nexus{})
 
-	//HttpPost("com.aliyun",
-	//	"artifactId",
-	//	"4.0.3",
-	//	"download/com/aliyun/aliyun-java-sdk-core/4.0.3/aliyun-java-sdk-core-4.0.3.pom",
-	//	"pom")
-
 	// 上传nexus仓库
 	go UploadNexusData()
 	// 更新数据库
@@ -295,6 +301,7 @@ func main() {
 
 	// 下载http文件
 	for {
+		log.Printf("开始下载文件至本地\n")
 		var n []Nexus
 		DB.Where("down_load_status =?", false).Find(&n)
 		//fmt.Println(n)
@@ -308,6 +315,7 @@ func main() {
 		}
 
 		time.Sleep(10 * time.Second)
+		log.Printf("下载文件至本地完成\n")
 	}
 	// time.Sleep(100 * time.Second)
 }
