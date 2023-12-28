@@ -9,7 +9,6 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -144,18 +143,20 @@ func UpdateNexusData() {
 			log.Printf("%s\n", err)
 			continue
 		}
-		defer res.Body.Close()
 		var t NexusRequest
 		err = json.NewDecoder(res.Body).Decode(&t)
 		if err != nil {
 			log.Printf("%s\n", err)
 		}
 		if err != nil {
-			println("failed to connect database")
+			log.Printf("failed to connect database: %s", err)
 		}
 		//db.Create(&Nexus{DownloadURL: v.DownloadURL, GroupID: v.Maven2.GroupID, ArtifactID: v.Maven2.ArtifactID, Version: v.Maven2.Version})
 		//db.Create(&Nexus{DownloadURL: "v.DownloadURL"})
-
+		err = res.Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
 		for _, item := range t.Items {
 			//fmt.Println(v.DownloadURL)
 			// 不存在URL则新建目录
@@ -185,7 +186,9 @@ func HttpPost(groupId string,
 	filePath string,
 	extension string,
 ) error {
-	url := "http://172.30.86.46:18081/service/rest/v1/components?repository=test-upload"
+	//url := "http://172.30.86.46:18081/service/rest/v1/components?repository=test-upload"
+	url := "http://10.147.235.204:8081/service/rest/v1/components?repository=maven-public"
+
 	method := "POST"
 
 	payload := &bytes.Buffer{}
@@ -218,7 +221,6 @@ func HttpPost(groupId string,
 		return err
 	}
 	req.Header.Add("accept", " application/json")
-	req.Header.Add("User-Agent", "Apifox/1.0.0 (https://apifox.com)")
 	req.Header.Add("Content-Type", "multipart/form-data")
 	req.Header.Add("Authorization", "Basic YWRtaW46SHlkZXZAbmV4dXMyMDIz")
 
@@ -229,8 +231,7 @@ func HttpPost(groupId string,
 		return err
 	}
 	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		//fmt.Println(err)
 		return err
@@ -272,7 +273,10 @@ func HttpGet(url string, pa string) error {
 	return nil
 }
 func init() {
-	os.Mkdir(DownLoadDir, 755)
+	err := os.MkdirAll(DownLoadDir, 755)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func main() {
