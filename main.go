@@ -288,7 +288,10 @@ func init() {
 }
 
 func main() {
-	DB.AutoMigrate(&Nexus{})
+	err := DB.AutoMigrate(&Nexus{})
+	if err != nil {
+		log.Print(err)
+	}
 
 	// 上传nexus仓库
 	go UploadNexusData()
