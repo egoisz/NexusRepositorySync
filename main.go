@@ -81,8 +81,6 @@ const DownLoadDir = "download"
 
 var DB = initDB()
 
-//var Log = initLog()
-
 func initDB() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open("nexus.db"), &gorm.Config{})
 	if err != nil {
@@ -136,7 +134,7 @@ func UpdateNexusData() {
 			if cTK != "" {
 				url = fmt.Sprintf("%s&&continuationToken=%s", url, cTK)
 			}
-			fmt.Println(url)
+			//fmt.Println(url)
 			req, err := http.NewRequest(method, url, nil)
 
 			if err != nil {
@@ -181,9 +179,7 @@ func UpdateNexusData() {
 				}
 
 			}
-			fmt.Println(cTK)
 			cTK = t.ContinuationToken
-			fmt.Println(cTK)
 			if cTK == "" {
 				break
 			}
@@ -301,6 +297,7 @@ func main() {
 
 	// 下载http文件
 	for {
+		time.Sleep(10 * time.Second)
 		log.Printf("开始下载文件至本地\n")
 		var n []Nexus
 		DB.Where("down_load_status =?", false).Find(&n)
@@ -313,9 +310,6 @@ func main() {
 			}
 			DB.Where(Nexus{DownloadURL: v.DownloadURL}).Updates(Nexus{DownLoadStatus: true})
 		}
-
-		time.Sleep(10 * time.Second)
-		log.Printf("下载文件至本地完成\n")
+		log.Printf("下载文件至本地完成!\n")
 	}
-	// time.Sleep(100 * time.Second)
 }
