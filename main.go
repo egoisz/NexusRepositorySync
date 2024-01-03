@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
@@ -90,6 +91,7 @@ func initDB() *gorm.DB {
 }
 
 func UploadNexusData() {
+outerLoop:
 	for {
 		time.Sleep(20 * time.Second)
 		log.Printf("开始上传文件至nexus\n")
@@ -106,7 +108,10 @@ func UploadNexusData() {
 				v.Version,
 				path.Join(DownLoadDir, v.Path),
 				v.Extension)
-			if err != nil {
+			if err.Error() == "ConnetError" {
+				log.Printf("上传 %s失败, 停止后续上传\n", v.Path)
+				continue outerLoop
+			} else if err != nil {
 				log.Printf("上传 %s 失败: %s\n", v.DownloadURL, err)
 				continue
 			}
@@ -194,8 +199,8 @@ func HttpPost(groupId string,
 	filePath string,
 	extension string,
 ) error {
-	url := "http://172.30.86.46:18081/service/rest/v1/components?repository=test-upload"
-	//url := "http://10.147.235.204:8081/service/rest/v1/components?repository=maven-public"
+	//url := "http://172.30.86.46:18081/service/rest/v1/components?repository=test-upload"
+	url := "http://10.147.235.204:8081/service/rest/v1/components?repository=maven-public"
 
 	method := "POST"
 
@@ -235,13 +240,12 @@ func HttpPost(groupId string,
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	res, err := client.Do(req)
 	if err != nil {
-		//fmt.Println(err)
-		return err
+		log.Println(err)
+		return errors.New("ConnetError")
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		//fmt.Println(err)
 		return err
 	}
 	if string(body) != "" {
