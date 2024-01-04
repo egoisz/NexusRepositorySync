@@ -71,6 +71,7 @@ type NpmRepository struct {
 	gorm.Model
 	DownloadURL    string
 	Name           string
+	Path           string
 	Version        string
 	DownLoadStatus bool `gorm:"default:false"`
 	UpLoadStatus   bool `gorm:"default:false"`

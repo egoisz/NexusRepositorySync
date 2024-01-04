@@ -12,11 +12,18 @@ import (
 	"os"
 )
 
-var OutterMavenPublicRepository = repositories.Repository{
+var OutterMavenPublicRepository = repositories.MavenRepository{
 	"http://172.30.86.46:18081",
 	"maven-proxy-148-ali",
 	repositories.Maven2,
 	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+}
+
+var OutterNpmPublicRepository = repositories.NpmRepository{
+	"http://172.30.84.90:8081",
+	"npm-local",
+	repositories.Npm,
+	"YWRtaW46WnlqY0AyMDIx",
 }
 
 var Db = initDB()
@@ -39,11 +46,19 @@ func init() {
 }
 
 func main() {
-	err := OutterMavenPublicRepository.GetComponents(Db)
+	//err := OutterMavenPublicRepository.GetComponents(Db)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//err = OutterMavenPublicRepository.DownloadComponents(Db)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	err := OutterNpmPublicRepository.GetComponents(Db)
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = OutterMavenPublicRepository.DownloadComponents(Db)
+	err = OutterNpmPublicRepository.DownloadComponents(Db)
 	if err != nil {
 		fmt.Println(err)
 	}

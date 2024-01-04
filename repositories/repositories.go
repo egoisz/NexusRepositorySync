@@ -28,12 +28,12 @@ const (
 
 // http://10.147.235.204:8081
 
-type RepositoryInterfac interface {
+type Repository interface {
 	GetComponents(db *gorm.DB) error
 	DownloadComponents(db *gorm.DB) error
 }
 
-type Repository struct {
+type MavenRepository struct {
 	Url  string
 	Name string
 	Type RepositoryFormat
@@ -45,7 +45,7 @@ type RepositoriesSync struct {
 	InnerRepository Repository
 }
 
-func (r *Repository) GetComponents(db *gorm.DB) error {
+func (r *MavenRepository) GetComponents(db *gorm.DB) error {
 	method := "GET"
 	client := &http.Client{
 		Timeout: 5 * time.Second,
@@ -109,41 +109,121 @@ func (r *Repository) GetComponents(db *gorm.DB) error {
 	return nil
 }
 
-func (r *Repository) DownloadComponents(db *gorm.DB) error {
-	if r.Type == Maven2 {
-		var t []orm.MavenRepository
-		db.Where("down_load_status =?", false).Find(&t)
-		//fmt.Println(n)
-		for _, v := range t {
-			//fmt.Println(v.DownloadURL, v.DownLoadStatus)
-			filePath := path.Join(config.DownLoadDir, r.Name, v.Path)
-			err := httpGet(v.DownloadURL, filePath)
-			if err != nil {
-				log.Printf("下载失败%s\n", v.DownloadURL)
-			}
-			db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
+func (r *MavenRepository) DownloadComponents(db *gorm.DB) error {
+	var t []orm.MavenRepository
+	db.Where("down_load_status =?", false).Find(&t)
+	//fmt.Println(n)
+	for _, v := range t {
+		//fmt.Println(v.DownloadURL, v.DownLoadStatus)
+		filePath := path.Join(config.DownLoadDir, r.Name, v.Path)
+		err := httpGet(v.DownloadURL, filePath)
+		if err != nil {
+			log.Printf("下载失败%s\n", v.DownloadURL)
 		}
-		log.Printf("下载文件至本地完成!\n")
+		db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
+	}
+	log.Printf("下载文件至本地完成!\n")
+	return nil
+}
+
+func (r *MavenRepository) UploadComponents(db *gorm.DB) error {
+	var t []orm.MavenRepository
+	db.Where("down_load_status =?", false).Find(&t)
+	//fmt.Println(n)
+	for _, v := range t {
+		//fmt.Println(v.DownloadURL, v.DownLoadStatus)
+		filePath := path.Join(config.DownLoadDir, r.Name, v.Path)
+		err := httpGet(v.DownloadURL, filePath)
+		if err != nil {
+			log.Printf("下载失败%s\n", v.DownloadURL)
+		}
+		db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
+	}
+	log.Printf("下载文件至本地完成!\n")
+	return nil
+}
+
+type NpmRepository struct {
+	Url  string
+	Name string
+	Type RepositoryFormat
+	Auth string
+}
+
+func (r *NpmRepository) GetComponents(db *gorm.DB) error {
+	method := "GET"
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	cTK := ""
+
+	for {
+		url := fmt.Sprintf("%s/service/rest/v1/components?repository=%s", r.Url, r.Name)
+		if cTK != "" {
+			url = fmt.Sprintf("%s&&continuationToken=%s", url, cTK)
+		}
+		//fmt.Println(url)
+		req, err := http.NewRequest(method, url, nil)
+
+		if err != nil {
+			log.Printf("%s\n", err)
+			continue
+		}
+		req.Header.Add("accept", "application/json")
+
+		res, err := client.Do(req)
+		if err != nil {
+			log.Printf("%s\n", err)
+			return err
+		}
+		var t orm.NexusRequest
+		err = json.NewDecoder(res.Body).Decode(&t)
+		if err != nil {
+			log.Printf("%s\n", err)
+		}
+
+		err = res.Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+		for _, item := range t.Items {
+			//fmt.Println(item)
+			for _, asset := range item.Assets {
+				db.Where(orm.NpmRepository{DownloadURL: asset.DownloadURL}).FirstOrCreate(&orm.NpmRepository{
+					DownloadURL: asset.DownloadURL,
+					Name:        asset.Npm.Name,
+					Path:        asset.Path,
+					Version:     asset.Npm.Version,
+				})
+				//err := HttpGet(v.DownloadURL, v.Path)
+				if err != nil {
+					log.Printf("%s\n", err)
+				}
+			}
+		}
+
+		cTK = t.ContinuationToken
+		if cTK == "" {
+			break
+		}
 	}
 	return nil
 }
 
-func (r *Repository) UploadComponents(db *gorm.DB) error {
-	if r.Type == Maven2 {
-		var t []orm.MavenRepository
-		db.Where("down_load_status =?", false).Find(&t)
-		//fmt.Println(n)
-		for _, v := range t {
-			//fmt.Println(v.DownloadURL, v.DownLoadStatus)
-			filePath := path.Join(config.DownLoadDir, r.Name, v.Path)
-			err := httpGet(v.DownloadURL, filePath)
-			if err != nil {
-				log.Printf("下载失败%s\n", v.DownloadURL)
-			}
-			db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
+func (r *NpmRepository) DownloadComponents(db *gorm.DB) error {
+	var t []orm.NpmRepository
+	db.Where("down_load_status =?", false).Find(&t)
+	//fmt.Println(n)
+	for _, v := range t {
+		//fmt.Println(v.DownloadURL, v.DownLoadStatus)
+		filePath := path.Join(config.DownLoadDir, r.Name, v.Path)
+		err := httpGet(v.DownloadURL, filePath)
+		if err != nil {
+			log.Printf("下载失败%s\n", v.DownloadURL)
 		}
-		log.Printf("下载文件至本地完成!\n")
+		db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})
 	}
+	//log.Printf("下载文件至本地完成!\n")
 	return nil
 }
 
