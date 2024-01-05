@@ -39,28 +39,27 @@ func (r NpmRepository) GetComponents(db *gorm.DB) error {
 		req, err := http.NewRequest(method, url, nil)
 
 		if err != nil {
-			log.Printf("%s\n", err)
+			r.Promote(err.Error())
 			continue
 		}
 		req.Header.Add("accept", "application/json")
 
 		res, err := client.Do(req)
 		if err != nil {
-			log.Printf("%s\n", err)
+			//r.Promote(err.Error())
 			return err
 		}
 		var t orm.NexusRequest
 		err = json.NewDecoder(res.Body).Decode(&t)
 		if err != nil {
-			log.Printf("%s\n", err)
+			r.Promote(err.Error())
 		}
 
 		err = res.Body.Close()
 		if err != nil {
-			log.Println(err)
+			r.Promote(err.Error())
 		}
 		for _, item := range t.Items {
-			//fmt.Println(item)
 			for _, asset := range item.Assets {
 				localFilePath := GetLocalFilePath(r.Name, asset.Path)
 				db.Where(orm.NpmRepository{DownloadURL: asset.DownloadURL}).FirstOrCreate(&orm.NpmRepository{
@@ -72,7 +71,7 @@ func (r NpmRepository) GetComponents(db *gorm.DB) error {
 				})
 				//err := HttpGet(v.DownloadURL, v.Path)
 				if err != nil {
-					log.Printf("%s\n", err)
+					r.Promote(err.Error())
 				}
 			}
 		}
@@ -93,11 +92,13 @@ func (r NpmRepository) DownloadComponents(db *gorm.DB) error {
 		//fmt.Println(v.DownloadURL, v.DownLoadStatus)
 		err := httpGet(v.DownloadURL, v.LocalFilePath)
 		if err != nil {
-			log.Printf("下载失败%s\n", v.DownloadURL)
+			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
+			continue
+		} else {
+			r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
+			db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})
 		}
-		db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})
 	}
-	//log.Printf("下载文件至本地完成!\n")
 	return nil
 }
 
@@ -119,7 +120,7 @@ func (r NpmRepository) UploadComponents(db *gorm.DB) error {
 			auth,
 			v.LocalFilePath)
 		if err != nil {
-			log.Printf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err)
+			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err))
 			if err.Error() == HttpStatusCodeError {
 				continue
 			} else if err.Error() == ConnectError {
@@ -128,14 +129,13 @@ func (r NpmRepository) UploadComponents(db *gorm.DB) error {
 			return err
 		}
 		db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{UpLoadStatus: true})
-		log.Printf("上传成功成功：%s \n", v.LocalFilePath)
+		r.Promote(fmt.Sprintf("上传成功成功：%s \n", v.LocalFilePath))
 	}
-	log.Printf("上传文件至nexus完成!\n")
 	return nil
 }
 
 func (r NpmRepository) Promote(s string) {
-	log.Printf("%s，%s %s", r.Name, r.Url, s)
+	log.Printf("%-20s %-25s %s", r.Name, r.Url, s)
 }
 
 func NpmComponentHttpPost(

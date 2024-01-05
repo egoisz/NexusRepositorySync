@@ -46,37 +46,34 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 
 		res, err := client.Do(req)
 		if err != nil {
-			log.Printf("%s\n", err)
+			//log.Printf("%s\n", err)
 			return err
 		}
 		var t orm.NexusRequest
 		err = json.NewDecoder(res.Body).Decode(&t)
 		if err != nil {
-			log.Printf("%s\n", err)
+			r.Promote(err.Error())
 		}
 
 		err = res.Body.Close()
 		if err != nil {
-			log.Println(err)
+			r.Promote(err.Error())
 		}
 		for _, item := range t.Items {
-			//fmt.Println(v.DownloadURL)
-			if r.Type == Maven2 {
-				for _, asset := range item.Assets {
-					localFilePath := GetLocalFilePath(r.Name, asset.Path)
-					db.Where(orm.MavenRepository{DownloadURL: asset.DownloadURL}).FirstOrCreate(&orm.MavenRepository{
-						DownloadURL:   asset.DownloadURL,
-						Path:          asset.Path,
-						LocalFilePath: localFilePath,
-						GroupID:       asset.Maven2.GroupID,
-						ArtifactID:    asset.Maven2.ArtifactID,
-						Version:       asset.Maven2.Version,
-						Extension:     asset.Maven2.Extension,
-					})
-					//err := HttpGet(v.DownloadURL, v.Path)
-					if err != nil {
-						log.Printf("%s\n", err)
-					}
+			for _, asset := range item.Assets {
+				localFilePath := GetLocalFilePath(r.Name, asset.Path)
+				db.Where(orm.MavenRepository{DownloadURL: asset.DownloadURL}).FirstOrCreate(&orm.MavenRepository{
+					DownloadURL:   asset.DownloadURL,
+					Path:          asset.Path,
+					LocalFilePath: localFilePath,
+					GroupID:       asset.Maven2.GroupID,
+					ArtifactID:    asset.Maven2.ArtifactID,
+					Version:       asset.Maven2.Version,
+					Extension:     asset.Maven2.Extension,
+				})
+				//err := HttpGet(v.DownloadURL, v.Path)
+				if err != nil {
+					r.Promote(err.Error())
 				}
 			}
 		}
@@ -98,11 +95,13 @@ func (r MavenRepository) DownloadComponents(db *gorm.DB) error {
 		//filePath := path.Join(config.DownLoadDir, r.Name, v.Path)
 		err := httpGet(v.DownloadURL, v.LocalFilePath)
 		if err != nil {
-			log.Printf("下载失败%s\n", v.DownloadURL)
+			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
+			continue
+		} else {
+			r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
+			db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
 		}
-		db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
 	}
-	log.Printf("下载文件至本地完成!\n")
 	return nil
 }
 
@@ -130,7 +129,7 @@ func (r MavenRepository) UploadComponents(db *gorm.DB) error {
 			v.Extension,
 		)
 		if err != nil {
-			log.Printf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err)
+			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err))
 			if err.Error() == HttpStatusCodeError {
 				continue
 			} else if err.Error() == ConnectError {
@@ -139,14 +138,13 @@ func (r MavenRepository) UploadComponents(db *gorm.DB) error {
 			return err
 		}
 		db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{UpLoadStatus: true})
-		log.Printf("上传成功成功：%s \n", v.LocalFilePath)
+		r.Promote(fmt.Sprintf("上传成功成功：%s \n", v.LocalFilePath))
 	}
-	log.Printf("上传文件至nexus完成!\n")
 	return nil
 }
 
 func (r MavenRepository) Promote(s string) {
-	log.Printf("%s，%s %s", r.Name, r.Url, s)
+	log.Printf("%-20s %-25s %s", r.Name, r.Url, s)
 }
 
 func MavenComponentHttpPost(

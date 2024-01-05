@@ -61,8 +61,7 @@ func httpGet(url string, filePath string) error {
 	// 获得文件的writer对象
 	writer := bufio.NewWriter(file)
 
-	written, _ := io.Copy(writer, reader)
-	log.Printf("下载完成%s %s, Total length: %d \n", url, filePath, written)
+	_, _ = io.Copy(writer, reader)
 	return nil
 }
 

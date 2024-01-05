@@ -28,6 +28,13 @@ var UploadMavenPublicRepository = repositories.MavenRepository{
 	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
 }
 
+var InnerMavenPublicRepository = repositories.MavenRepository{
+	"http://10.147.235.204:8081",
+	"inner-maven-public",
+	repositories.Maven2,
+	"YWRtaW46WXl5dEBuZXh1c0AyMDIz",
+}
+
 var OutterNpmPublicRepository = repositories.NpmRepository{
 	"http://172.30.84.90:8081",
 	"npm-local",
@@ -42,6 +49,13 @@ var UploadNpmPublicRepository = repositories.NpmRepository{
 	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
 }
 
+var InnerNpmPublicRepository = repositories.NpmRepository{
+	"http://10.147.235.204:8081",
+	"inner-npm-public",
+	repositories.Npm,
+	"YWRtaW46WXl5dEBuZXh1c0AyMDIz",
+}
+
 var Db = initDB()
 
 func initDB() *gorm.DB {
@@ -49,35 +63,35 @@ func initDB() *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&orm.MavenRepository{})
-	db.AutoMigrate(&orm.NpmRepository{})
+	_ = db.AutoMigrate(&orm.MavenRepository{})
+	_ = db.AutoMigrate(&orm.NpmRepository{})
 	return db
 }
 
-func Syncrepository(repositorySyncsync repositories.RepositoriesSync, db *gorm.DB) {
+func Syncrepository(r repositories.RepositoriesSync, db *gorm.DB) {
 	for {
-		repositorySyncsync.DownloadRepository.Promote("开始获取组件清单")
-		if err := repositorySyncsync.DownloadRepository.GetComponents(db); err != nil {
-			repositorySyncsync.DownloadRepository.Promote(err.Error())
-			repositorySyncsync.DownloadRepository.Promote("获取组件中断")
+		r.DownloadRepository.Promote("开始获取组件清单")
+		if err := r.DownloadRepository.GetComponents(db); err != nil {
+			r.DownloadRepository.Promote(err.Error())
+			r.DownloadRepository.Promote("获取组件中断")
 		} else {
-			repositorySyncsync.DownloadRepository.Promote("获取组件清单结束")
+			r.DownloadRepository.Promote("获取组件清单结束")
 		}
 
-		repositorySyncsync.DownloadRepository.Promote("开始下载组件")
-		if err := repositorySyncsync.DownloadRepository.DownloadComponents(db); err != nil {
-			repositorySyncsync.DownloadRepository.Promote(err.Error())
-			repositorySyncsync.DownloadRepository.Promote("下载组件中断")
+		r.DownloadRepository.Promote("开始下载组件")
+		if err := r.DownloadRepository.DownloadComponents(db); err != nil {
+			r.DownloadRepository.Promote(err.Error())
+			r.DownloadRepository.Promote("下载组件中断")
 		} else {
-			repositorySyncsync.DownloadRepository.Promote("下载组件结束")
+			r.DownloadRepository.Promote("下载组件结束")
 		}
 
-		repositorySyncsync.UploadRepository.Promote("开始上传组件")
-		if err := repositorySyncsync.UploadRepository.UploadComponents(db); err != nil {
-			repositorySyncsync.UploadRepository.Promote(err.Error())
-			repositorySyncsync.UploadRepository.Promote("上传组件中断")
+		r.UploadRepository.Promote("开始上传组件")
+		if err := r.UploadRepository.UploadComponents(db); err != nil {
+			r.UploadRepository.Promote(err.Error())
+			r.UploadRepository.Promote("上传组件中断")
 		} else {
-			repositorySyncsync.DownloadRepository.Promote("上传组件结束")
+			r.DownloadRepository.Promote("上传组件结束")
 		}
 
 		time.Sleep(TimeStep)
@@ -102,20 +116,37 @@ func init() {
 }
 
 func main() {
+	// prod 使用
 	var repositorySyncSice = []repositories.RepositoriesSync{
 		{
 			DownloadRepository: OutterMavenPublicRepository,
-			UploadRepository:   UploadMavenPublicRepository,
+			UploadRepository:   InnerMavenPublicRepository,
 		},
 		{
 			DownloadRepository: OutterNpmPublicRepository,
-			UploadRepository:   UploadNpmPublicRepository,
+			UploadRepository:   InnerNpmPublicRepository,
 		},
 	}
 
 	for _, repositorySyncsync := range repositorySyncSice {
 		go Syncrepository(repositorySyncsync, Db)
 	}
+
+	// dev测试
+	//var repositorySyncSice = []repositories.RepositoriesSync{
+	//	{
+	//		DownloadRepository: OutterMavenPublicRepository,
+	//		UploadRepository:   UploadMavenPublicRepository,
+	//	},
+	//	{
+	//		DownloadRepository: OutterNpmPublicRepository,
+	//		UploadRepository:   UploadNpmPublicRepository,
+	//	},
+	//}
+	//
+	//for _, repositorySyncsync := range repositorySyncSice {
+	//	go Syncrepository(repositorySyncsync, Db)
+	//}
 
 	forever()
 
