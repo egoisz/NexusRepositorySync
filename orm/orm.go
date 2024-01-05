@@ -62,6 +62,7 @@ type MavenRepository struct {
 	ArtifactID     string
 	Version        string
 	Path           string
+	LocalFilePath  string
 	Extension      string
 	DownLoadStatus bool `gorm:"default:false"`
 	UpLoadStatus   bool `gorm:"default:false"`
@@ -72,6 +73,7 @@ type NpmRepository struct {
 	DownloadURL    string
 	Name           string
 	Path           string
+	LocalFilePath  string
 	Version        string
 	DownLoadStatus bool `gorm:"default:false"`
 	UpLoadStatus   bool `gorm:"default:false"`
