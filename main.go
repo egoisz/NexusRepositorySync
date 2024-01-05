@@ -143,6 +143,12 @@ func main() {
 		},
 	}
 
+	for _, repositorySync := range repositorySyncSice {
+		go Syncrepository(repositorySync, Db)
+	}
+
+	forever()
+
 	// 测试
 	//var repositorySyncSice = []repositories.RepositoriesSync{
 	//	{
@@ -154,10 +160,6 @@ func main() {
 	//		UploadRepository:   InnerNpmPublicRepository,
 	//	},
 	//}
-
-	for _, repositorySync := range repositorySyncSice {
-		go Syncrepository(repositorySync, Db)
-	}
 
 	// dev
 	//var repositorySyncSice = []repositories.RepositoriesSync{
@@ -174,8 +176,6 @@ func main() {
 	//for _, repositorySyncsync := range repositorySyncSice {
 	//	go Syncrepository(repositorySyncsync, Db)
 	//}
-
-	forever()
 
 	//if err := OutterMavenPublicRepository.GetComponents(Db); err != nil {
 	//	fmt.Println(err)
