@@ -14,61 +14,61 @@ import (
 
 const TimeStep = 10 * time.Second
 
-var OutterMavenPublicRepository = repositories.MavenRepository{
-	"http://172.30.86.46:18081",
-	"maven-proxy-148-ali",
-	repositories.Maven2,
-	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-}
+//var OutterMavenPublicRepository = repositories.MavenRepository{
+//	"http://172.30.86.46:18081",
+//	"maven-proxy-148-ali",
+//	repositories.Maven2,
+//	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+//}
+//
+//var UploadMavenPublicRepository = repositories.MavenRepository{
+//	"http://172.30.86.46:18081",
+//	"test-upload",
+//	repositories.Maven2,
+//	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+//}
+//
+//var OutterNpmPublicRepository = repositories.NpmRepository{
+//	"http://172.30.84.90:8081",
+//	"npm-local",
+//	repositories.Npm,
+//	"YWRtaW46WnlqY0AyMDIx",
+//}
+//
+//var UploadNpmPublicRepository = repositories.NpmRepository{
+//	"http://172.30.86.46:18081",
+//	"test-npm-upload",
+//	repositories.Npm,
+//	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+//}
 
-var UploadMavenPublicRepository = repositories.MavenRepository{
-	"http://172.30.86.46:18081",
-	"test-upload",
-	repositories.Maven2,
-	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-}
-
-var OutterNpmPublicRepository = repositories.NpmRepository{
-	"http://172.30.84.90:8081",
-	"npm-local",
-	repositories.Npm,
-	"YWRtaW46WnlqY0AyMDIx",
-}
-
-var UploadNpmPublicRepository = repositories.NpmRepository{
-	"http://172.30.86.46:18081",
-	"test-npm-upload",
-	repositories.Npm,
-	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-}
-
-// prod
+// TransMavenPublicRepository prod 配置
 var TransMavenPublicRepository = repositories.MavenRepository{
-	"http://172.30.86.46:18081",
-	"sync-maven-public",
-	repositories.Maven2,
-	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+	Url:  "http://172.30.86.46:18081",
+	Name: "sync-maven-public",
+	Type: repositories.Maven2,
+	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
 }
 
 var TransNpmPublicRepository = repositories.NpmRepository{
-	"http://172.30.86.46:18081",
-	"sync-npm-public",
-	repositories.Npm,
-	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+	Url:  "http://172.30.86.46:18081",
+	Name: "sync-npm-public",
+	Type: repositories.Npm,
+	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
 }
 
 var InnerMavenPublicRepository = repositories.MavenRepository{
-	"http://10.147.235.204:8081",
-	"inner-maven-public",
-	repositories.Maven2,
-	"YWRtaW46WXl5dEBuZXh1c0AyMDIz",
+	Url:  "http://10.147.235.204:8081",
+	Name: "inner-maven-public",
+	Type: repositories.Maven2,
+	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
 }
 
 var InnerNpmPublicRepository = repositories.NpmRepository{
-	"http://10.147.235.204:8081",
-	"inner-npm-public",
-	repositories.Npm,
-	"YWRtaW46WXl5dEBuZXh1c0AyMDIz",
+	Url:  "http://10.147.235.204:8081",
+	Name: "inner-npm-public",
+	Type: repositories.Npm,
+	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
 }
 
 var Db = initDB()
