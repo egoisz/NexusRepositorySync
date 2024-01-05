@@ -96,7 +96,12 @@ func (r MavenRepository) DownloadComponents(db *gorm.DB) error {
 		err := httpGet(v.DownloadURL, v.LocalFilePath)
 		if err != nil {
 			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
-			continue
+			if err.Error() == HttpStatusCodeError {
+				continue
+			} else if err.Error() == ConnectError {
+				return err
+			}
+			return err
 		} else {
 			r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
 			db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
@@ -129,7 +134,7 @@ func (r MavenRepository) UploadComponents(db *gorm.DB) error {
 			v.Extension,
 		)
 		if err != nil {
-			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err))
+			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n", v.LocalFilePath, err))
 			if err.Error() == HttpStatusCodeError {
 				continue
 			} else if err.Error() == ConnectError {

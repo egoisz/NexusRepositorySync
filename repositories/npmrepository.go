@@ -93,7 +93,12 @@ func (r NpmRepository) DownloadComponents(db *gorm.DB) error {
 		err := httpGet(v.DownloadURL, v.LocalFilePath)
 		if err != nil {
 			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
-			continue
+			if err.Error() == HttpStatusCodeError {
+				continue
+			} else if err.Error() == ConnectError {
+				return err
+			}
+			return err
 		} else {
 			r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
 			db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})

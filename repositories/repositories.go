@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type RepositoryFormat string
@@ -39,13 +40,21 @@ type RepositoriesSync struct {
 }
 
 func httpGet(url string, filePath string) error {
+	method := "GET"
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	req, err := http.NewRequest(method, url, nil)
+	res, err := client.Do(req)
 
-	res, err := http.Get(url)
 	if err != nil {
-		return err
+		log.Println(err)
+		return errors.New(ConnectError)
 	}
 	defer res.Body.Close()
-
+	if err := httpCodeCheck(res.StatusCode); err != nil {
+		return err
+	}
 	// 获得get请求响应的reader对象
 	reader := bufio.NewReaderSize(res.Body, 32*1024)
 

@@ -28,13 +28,6 @@ var UploadMavenPublicRepository = repositories.MavenRepository{
 	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
 }
 
-var InnerMavenPublicRepository = repositories.MavenRepository{
-	"http://10.147.235.204:8081",
-	"inner-maven-public",
-	repositories.Maven2,
-	"YWRtaW46WXl5dEBuZXh1c0AyMDIz",
-}
-
 var OutterNpmPublicRepository = repositories.NpmRepository{
 	"http://172.30.84.90:8081",
 	"npm-local",
@@ -47,6 +40,28 @@ var UploadNpmPublicRepository = repositories.NpmRepository{
 	"test-npm-upload",
 	repositories.Npm,
 	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+}
+
+// prod
+var TransMavenPublicRepository = repositories.MavenRepository{
+	"http://172.30.86.46:18081",
+	"sync-maven-public",
+	repositories.Maven2,
+	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+}
+
+var TransNpmPublicRepository = repositories.NpmRepository{
+	"http://172.30.86.46:18081",
+	"sync-npm-public",
+	repositories.Npm,
+	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+}
+
+var InnerMavenPublicRepository = repositories.MavenRepository{
+	"http://10.147.235.204:8081",
+	"inner-maven-public",
+	repositories.Maven2,
+	"YWRtaW46WXl5dEBuZXh1c0AyMDIz",
 }
 
 var InnerNpmPublicRepository = repositories.NpmRepository{
@@ -119,20 +134,32 @@ func main() {
 	// prod 使用
 	var repositorySyncSice = []repositories.RepositoriesSync{
 		{
-			DownloadRepository: OutterMavenPublicRepository,
+			DownloadRepository: TransMavenPublicRepository,
 			UploadRepository:   InnerMavenPublicRepository,
 		},
 		{
-			DownloadRepository: OutterNpmPublicRepository,
+			DownloadRepository: TransNpmPublicRepository,
 			UploadRepository:   InnerNpmPublicRepository,
 		},
 	}
 
-	for _, repositorySyncsync := range repositorySyncSice {
-		go Syncrepository(repositorySyncsync, Db)
+	// 测试
+	//var repositorySyncSice = []repositories.RepositoriesSync{
+	//	{
+	//		DownloadRepository: OutterMavenPublicRepository,
+	//		UploadRepository:   InnerMavenPublicRepository,
+	//	},
+	//	{
+	//		DownloadRepository: OutterNpmPublicRepository,
+	//		UploadRepository:   InnerNpmPublicRepository,
+	//	},
+	//}
+
+	for _, repositorySync := range repositorySyncSice {
+		go Syncrepository(repositorySync, Db)
 	}
 
-	// dev测试
+	// dev
 	//var repositorySyncSice = []repositories.RepositoriesSync{
 	//	{
 	//		DownloadRepository: OutterMavenPublicRepository,
