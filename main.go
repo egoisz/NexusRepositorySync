@@ -14,6 +14,34 @@ import (
 
 const TimeStep = 10 * time.Second
 
+//var TransMavenPublicRepository = repositories.MavenRepository{
+//	Url:  "http://172.30.86.46:18081",
+//	Name: "sync-maven-public",
+//	Type: repositories.Maven2,
+//	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+//}
+//
+//var TransNpmPublicRepository = repositories.NpmRepository{
+//	Url:  "http://172.30.86.46:18081",
+//	Name: "sync-npm-public",
+//	Type: repositories.Npm,
+//	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
+//}
+//
+//var InnerMavenPublicRepository = repositories.MavenRepository{
+//	Url:  "http://10.147.235.204:8081",
+//	Name: "inner-maven-public",
+//	Type: repositories.Maven2,
+//	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
+//}
+//
+//var InnerNpmPublicRepository = repositories.NpmRepository{
+//	Url:  "http://10.147.235.204:8081",
+//	Name: "inner-npm-public",
+//	Type: repositories.Npm,
+//	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
+//}
+
 //var OutterMavenPublicRepository = repositories.MavenRepository{
 //	"http://172.30.86.46:18081",
 //	"maven-proxy-148-ali",
@@ -43,35 +71,9 @@ const TimeStep = 10 * time.Second
 //}
 
 // TransMavenPublicRepository prod 配置
-var TransMavenPublicRepository = repositories.MavenRepository{
-	Url:  "http://172.30.86.46:18081",
-	Name: "sync-maven-public",
-	Type: repositories.Maven2,
-	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-}
-
-var TransNpmPublicRepository = repositories.NpmRepository{
-	Url:  "http://172.30.86.46:18081",
-	Name: "sync-npm-public",
-	Type: repositories.Npm,
-	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-}
-
-var InnerMavenPublicRepository = repositories.MavenRepository{
-	Url:  "http://10.147.235.204:8081",
-	Name: "inner-maven-public",
-	Type: repositories.Maven2,
-	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
-}
-
-var InnerNpmPublicRepository = repositories.NpmRepository{
-	Url:  "http://10.147.235.204:8081",
-	Name: "inner-npm-public",
-	Type: repositories.Npm,
-	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
-}
 
 var Db = initDB()
+var RepositorySyncSice []repositories.RepositoriesSync
 
 func initDB() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open("nexus.db"), &gorm.Config{})
@@ -115,11 +117,6 @@ func Syncrepository(r repositories.RepositoriesSync, db *gorm.DB) {
 
 func forever() {
 	for {
-		//An example goroutine that might run
-		//indefinitely. In actual implementation
-		//it might block on a chanel receive instead
-		//of time.Sleep for example.
-		//fmt.Printf("%v+\n", time.Now())
 		time.Sleep(time.Second)
 	}
 }
@@ -128,11 +125,36 @@ func init() {
 	if err != nil {
 		log.Panic(err)
 	}
-}
 
-func main() {
-	// prod 使用
-	var repositorySyncSice = []repositories.RepositoriesSync{
+	var TransMavenPublicRepository = repositories.MavenRepository{
+		Url:  config.NexusConfig.DownloadMavenRepositoryUrl,
+		Name: config.NexusConfig.DownloadMavenRepositoryName,
+		Type: repositories.Maven2,
+		Auth: config.NexusConfig.DownloadMavenRepositoryAuth,
+	}
+
+	var TransNpmPublicRepository = repositories.NpmRepository{
+		Url:  config.NexusConfig.DownloadNpmRepositoryUrl,
+		Name: config.NexusConfig.DownloadNpmRepositoryName,
+		Type: repositories.Npm,
+		Auth: config.NexusConfig.DownloadNpmRepositoryAuth,
+	}
+
+	var InnerMavenPublicRepository = repositories.MavenRepository{
+		Url:  config.NexusConfig.UploadMavenRepositoryUrl,
+		Name: config.NexusConfig.UploadMavenRepositoryName,
+		Type: repositories.Maven2,
+		Auth: config.NexusConfig.UploadMavenRepositoryAuth,
+	}
+
+	var InnerNpmPublicRepository = repositories.NpmRepository{
+		Url:  config.NexusConfig.UploadNpmRepositoryUrl,
+		Name: config.NexusConfig.UploadNpmRepositoryName,
+		Type: repositories.Npm,
+		Auth: config.NexusConfig.UploadNpmRepositoryAuth,
+	}
+
+	RepositorySyncSice = []repositories.RepositoriesSync{
 		{
 			DownloadRepository: TransMavenPublicRepository,
 			UploadRepository:   InnerMavenPublicRepository,
@@ -142,8 +164,11 @@ func main() {
 			UploadRepository:   InnerNpmPublicRepository,
 		},
 	}
+}
 
-	for _, repositorySync := range repositorySyncSice {
+func main() {
+
+	for _, repositorySync := range RepositorySyncSice {
 		go Syncrepository(repositorySync, Db)
 	}
 
