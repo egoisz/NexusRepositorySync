@@ -27,7 +27,7 @@ const (
 
 // http://10.147.235.204:8081
 
-type Repository interface {
+type Repositoryer interface {
 	GetComponents(db *gorm.DB) error
 	DownloadComponents(db *gorm.DB) error
 	UploadComponents(db *gorm.DB) error
@@ -35,8 +35,8 @@ type Repository interface {
 }
 
 type RepositoriesSync struct {
-	DownloadRepository Repository
-	UploadRepository   Repository
+	DownloadRepository Repositoryer
+	UploadRepository   Repositoryer
 }
 
 func httpGet(url string, filePath string) error {

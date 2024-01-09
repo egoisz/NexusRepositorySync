@@ -26,7 +26,6 @@ type Config struct {
 }
 
 func init() {
-	// 打开 YAML 配置文件
 	filePath := ".config.yaml" // 将此处修改为你自己的 YAML 文件路径
 	data, err := os.ReadFile(filePath)
 	if err != nil {

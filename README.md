@@ -29,3 +29,13 @@ uploadNpmRepositoryUrl: "http://172.30.86.46:18081"
 uploadNpmRepositoryName: "test-npm-upload"
 uploadNpmRepositoryAuth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz"
 ```
+
+### 2.二进制启动
+```bash
+./NexusSync
+```
+
+### 3.本地文件
+程序启动后会在本地启动以下文件
+- `download`目录：本地存储远端仓库下载的制品文件
+- `nexus.db`：sqlite数据库,存储制品文件的下载上传状态
