@@ -1,7 +1,7 @@
 ### 通过Nexus api 下载maven仓库或者npm仓库中的制品 然后上传到另一个仓库中
 
 ### 1.创建本地配置文件`.config`如下
-`***Auth`字段值为 `<账户>:<密码>` base64 加密 以下命令可以获得
+`uploadRepositoryAuth`字段值为 `<账户>:<密码>` base64 加密 以下命令可以获得
 ```bash
 echo -n "admin:12345" | base64 
 
