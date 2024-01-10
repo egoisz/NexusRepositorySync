@@ -34,7 +34,7 @@ port: 18090
 
 ### 2.二进制启动
 ```bash
-./NexusSync
+./NexusRepositorySync
 ```
 
 ### 3.本地文件
