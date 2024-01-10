@@ -23,6 +23,7 @@ type Config struct {
 	UploadNpmRepositoryUrl      string `yaml:"uploadNpmRepositoryUrl"`
 	UploadNpmRepositoryName     string `yaml:"uploadNpmRepositoryName"`
 	UploadNpmRepositoryAuth     string `yaml:"uploadNpmRepositoryAuth"`
+	TimeStep                    int    `yaml:"timeStep"`
 }
 
 func init() {

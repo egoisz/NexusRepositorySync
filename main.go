@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-const TimeStep = 10 * time.Second
-
 //var TransMavenPublicRepository = repositories.MavenRepository{
 //	Url:  "http://172.30.86.46:18081",
 //	Name: "sync-maven-public",
@@ -72,6 +70,7 @@ const TimeStep = 10 * time.Second
 
 // TransMavenPublicRepository prod 配置
 
+var TimeStep time.Duration
 var Db = initDB()
 var RepositorySyncSice []repositories.RepositoriesSync
 
@@ -164,10 +163,11 @@ func init() {
 			UploadRepository:   InnerNpmPublicRepository,
 		},
 	}
+	TimeStep = time.Duration(config.NexusConfig.TimeStep) * time.Second
 }
 
 func main() {
-
+	log.Printf("任务执行间隔为：%v 秒", TimeStep)
 	for _, repositorySync := range RepositorySyncSice {
 		go Syncrepository(repositorySync, Db)
 	}
