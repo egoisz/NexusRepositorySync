@@ -14,67 +14,9 @@ import (
 	"time"
 )
 
-//var TransMavenPublicRepository = repositories.MavenRepository{
-//	Url:  "http://172.30.86.46:18081",
-//	Name: "sync-maven-public",
-//	Type: repositories.Maven2,
-//	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-//}
-//
-//var TransNpmPublicRepository = repositories.NpmRepository{
-//	Url:  "http://172.30.86.46:18081",
-//	Name: "sync-npm-public",
-//	Type: repositories.Npm,
-//	Auth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-//}
-//
-//var InnerMavenPublicRepository = repositories.MavenRepository{
-//	Url:  "http://10.147.235.204:8081",
-//	Name: "inner-maven-public",
-//	Type: repositories.Maven2,
-//	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
-//}
-//
-//var InnerNpmPublicRepository = repositories.NpmRepository{
-//	Url:  "http://10.147.235.204:8081",
-//	Name: "inner-npm-public",
-//	Type: repositories.Npm,
-//	Auth: "YWRtaW46WXl5dEBuZXh1c0AyMDIz",
-//}
-
-//var OutterMavenPublicRepository = repositories.MavenRepository{
-//	"http://172.30.86.46:18081",
-//	"maven-proxy-148-ali",
-//	repositories.Maven2,
-//	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-//}
-//
-//var UploadMavenPublicRepository = repositories.MavenRepository{
-//	"http://172.30.86.46:18081",
-//	"test-upload",
-//	repositories.Maven2,
-//	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-//}
-//
-//var OutterNpmPublicRepository = repositories.NpmRepository{
-//	"http://172.30.84.90:8081",
-//	"npm-local",
-//	repositories.Npm,
-//	"YWRtaW46WnlqY0AyMDIx",
-//}
-//
-//var UploadNpmPublicRepository = repositories.NpmRepository{
-//	"http://172.30.86.46:18081",
-//	"test-npm-upload",
-//	repositories.Npm,
-//	"YWRtaW46SHlkZXZAbmV4dXMyMDIz",
-//}
-
-// TransMavenPublicRepository prod 配置
-
 var TimeStep time.Duration
 var Db = initDB()
-var RepositorySyncSice []repositories.RepositoriesSync
+var RepositorySyncTask []repositories.RepositoriesSync
 
 func initDB() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open("nexus.db"), &gorm.Config{})
@@ -126,54 +68,50 @@ func init() {
 	if err != nil {
 		log.Panic(err)
 	}
+	for _, task := range config.NexusConfig.RepositorySyncTask {
+		if task.RepositoryType == string(repositories.Maven2) {
+			dRepository := repositories.MavenRepository{
+				Url:  task.DownRepositoryUrl,
+				Name: task.DownRepositoryName,
+				Type: repositories.Maven2,
+			}
+			uRepository := repositories.MavenRepository{
+				Url:  task.UploadRepositoryUrl,
+				Name: task.UploadRepositoryName,
+				Auth: task.UploadRepositoryAuth,
+				Type: repositories.Maven2,
+			}
+			RepositorySyncTask = append(RepositorySyncTask, repositories.RepositoriesSync{
+				DownloadRepository: dRepository,
+				UploadRepository:   uRepository,
+			})
 
-	var TransMavenPublicRepository = repositories.MavenRepository{
-		Url:  config.NexusConfig.DownloadMavenRepositoryUrl,
-		Name: config.NexusConfig.DownloadMavenRepositoryName,
-		Type: repositories.Maven2,
-		Auth: config.NexusConfig.DownloadMavenRepositoryAuth,
+		} else if task.RepositoryType == string(repositories.Npm) {
+			dRepository := repositories.NpmRepository{
+				Url:  task.DownRepositoryUrl,
+				Name: task.DownRepositoryName,
+				Type: repositories.Npm,
+			}
+			uRepository := repositories.NpmRepository{
+				Url:  task.UploadRepositoryUrl,
+				Name: task.UploadRepositoryName,
+				Auth: task.UploadRepositoryAuth,
+				Type: repositories.Npm,
+			}
+			RepositorySyncTask = append(RepositorySyncTask, repositories.RepositoriesSync{
+				DownloadRepository: dRepository,
+				UploadRepository:   uRepository,
+			})
+		}
+
 	}
-
-	var TransNpmPublicRepository = repositories.NpmRepository{
-		Url:  config.NexusConfig.DownloadNpmRepositoryUrl,
-		Name: config.NexusConfig.DownloadNpmRepositoryName,
-		Type: repositories.Npm,
-		Auth: config.NexusConfig.DownloadNpmRepositoryAuth,
-	}
-
-	var InnerMavenPublicRepository = repositories.MavenRepository{
-		Url:  config.NexusConfig.UploadMavenRepositoryUrl,
-		Name: config.NexusConfig.UploadMavenRepositoryName,
-		Type: repositories.Maven2,
-		Auth: config.NexusConfig.UploadMavenRepositoryAuth,
-	}
-
-	var InnerNpmPublicRepository = repositories.NpmRepository{
-		Url:  config.NexusConfig.UploadNpmRepositoryUrl,
-		Name: config.NexusConfig.UploadNpmRepositoryName,
-		Type: repositories.Npm,
-		Auth: config.NexusConfig.UploadNpmRepositoryAuth,
-	}
-
-	RepositorySyncSice = []repositories.RepositoriesSync{
-		{
-			DownloadRepository: TransMavenPublicRepository,
-			UploadRepository:   InnerMavenPublicRepository,
-		},
-		{
-			DownloadRepository: TransNpmPublicRepository,
-			UploadRepository:   InnerNpmPublicRepository,
-		},
-	}
-	TimeStep = time.Duration(config.NexusConfig.TimeStep) * time.Second
-
 	log.Printf("任务执行间隔为：%v", TimeStep)
 	log.Printf("监听端口为：%d", config.NexusConfig.Port)
 	gin.SetMode(gin.ReleaseMode)
 }
 
 func main() {
-	for _, repositorySync := range RepositorySyncSice {
+	for _, repositorySync := range RepositorySyncTask {
 		go Syncrepository(repositorySync, Db)
 	}
 
@@ -185,55 +123,4 @@ func main() {
 
 	//forever()
 
-	//var r = gin.Default()
-	//
-
-	// 测试
-	//var repositorySyncSice = []repositories.RepositoriesSync{
-	//	{
-	//		DownloadRepository: OutterMavenPublicRepository,
-	//		UploadRepository:   InnerMavenPublicRepository,
-	//	},
-	//	{
-	//		DownloadRepository: OutterNpmPublicRepository,
-	//		UploadRepository:   InnerNpmPublicRepository,
-	//	},
-	//}
-
-	// dev
-	//var repositorySyncSice = []repositories.RepositoriesSync{
-	//	{
-	//		DownloadRepository: OutterMavenPublicRepository,
-	//		UploadRepository:   UploadMavenPublicRepository,
-	//	},
-	//	{
-	//		DownloadRepository: OutterNpmPublicRepository,
-	//		UploadRepository:   UploadNpmPublicRepository,
-	//	},
-	//}
-	//
-	//for _, repositorySyncsync := range repositorySyncSice {
-	//	go Syncrepository(repositorySyncsync, Db)
-	//}
-
-	//if err := OutterMavenPublicRepository.GetComponents(Db); err != nil {
-	//	fmt.Println(err)
-	//}
-	//if err := OutterMavenPublicRepository.DownloadComponents(Db); err != nil {
-	//	fmt.Println(err)
-	//}
-	//if err := UploadMavenPublicRepository.UploadComponents(Db); err != nil {
-	//	fmt.Println(err)
-	//}
-	//
-
-	//if err := OutterNpmPublicRepository.GetComponents(Db); err != nil {
-	//	fmt.Println(err)
-	//}
-	//if err := OutterNpmPublicRepository.DownloadComponents(Db); err != nil {
-	//	fmt.Println(err)
-	//}
-	//if err := UploadNpmPublicRepository.UploadComponents(Db); err != nil {
-	//	fmt.Println(err)
-	//}
 }

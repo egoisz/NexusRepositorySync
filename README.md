@@ -8,25 +8,22 @@ echo -n "admin:12345" | base64
 # YWRtaW46MTIzNDU=
 ```
 ```
-# downloadMaven
-downloadMavenRepositoryUrl: "http://172.30.86.46:18081"
-downloadMavenRepositoryName: "maven-proxy-148-ali"
-downloadMavenRepositoryAuth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz"
-
-#  uploadMaven
-uploadMavenRepositoryUrl: "http://172.30.86.46:18081"
-uploadMavenRepositoryName: "test-upload"
-uploadMavenRepositoryAuth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz"
-
-# downloadNpm
-downloadNpmRepositoryUrl: "http://172.30.84.90:8081"
-downloadNpmRepositoryName: "npm-local"
-downloadNpmRepositoryAuth: "YWRtaW46WnlqY0AyMDIx"
-
-# uploadNpm
-uploadNpmRepositoryUrl: "http://172.30.86.46:18081"
-uploadNpmRepositoryName: "test-npm-upload"
-uploadNpmRepositoryAuth: "YWRtaW46SHlkZXZAbmV4dXMyMDIz"
+repositorySyncTask:
+  # maven同步
+  - downRepositoryUrl: "http://172.30.86.136:8081"
+    downRepositoryName: "sync-maven-public"
+    uploadRepositoryUrl: "http://10.147.235.204:8081"
+    uploadRepositoryName: "inner-maven-public"
+    uploadRepositoryAuth: "YWRtasadasd5dEBuZXh1c0AyMDIz"
+    repositoryType: "maven2"
+    
+  # npm 同步
+  - downRepositoryUrl: "http://172.30.86.136:8081"
+    downRepositoryName: "sync-npm-public"
+    uploadRepositoryUrl: "http://10.147.235.204:8081"
+    uploadRepositoryName: "inner-npm-public"
+    uploadRepositoryAuth: "YWRtaW46WasdasBuZXh1c0AyMDIz"
+    repositoryType: "npm"
 
 # 任务执行间隔 单位秒
 timeStep: 20
