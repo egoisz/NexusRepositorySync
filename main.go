@@ -164,10 +164,10 @@ func init() {
 		},
 	}
 	TimeStep = time.Duration(config.NexusConfig.TimeStep) * time.Second
+	log.Printf("任务执行间隔为：%v 秒", TimeStep)
 }
 
 func main() {
-	log.Printf("任务执行间隔为：%v 秒", TimeStep)
 	for _, repositorySync := range RepositorySyncSice {
 		go Syncrepository(repositorySync, Db)
 	}
