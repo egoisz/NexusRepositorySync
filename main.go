@@ -178,7 +178,11 @@ func main() {
 	}
 
 	r := web.GetRouter()
-	r.Run()
+	err := r.Run()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	//forever()
 
 	//var r = gin.Default()
