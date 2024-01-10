@@ -4,6 +4,8 @@ import (
 	"NexusRepositorySync/config"
 	"NexusRepositorySync/orm"
 	"NexusRepositorySync/repositories"
+	"NexusRepositorySync/web"
+	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -164,7 +166,10 @@ func init() {
 		},
 	}
 	TimeStep = time.Duration(config.NexusConfig.TimeStep) * time.Second
-	log.Printf("任务执行间隔为：%v 秒", TimeStep)
+
+	log.Printf("任务执行间隔为：%v", TimeStep)
+	log.Printf("监听端口为：%d", config.NexusConfig.Port)
+	gin.SetMode(gin.ReleaseMode)
 }
 
 func main() {
@@ -172,7 +177,12 @@ func main() {
 		go Syncrepository(repositorySync, Db)
 	}
 
-	forever()
+	r := web.GetRouter()
+	r.Run()
+	//forever()
+
+	//var r = gin.Default()
+	//
 
 	// 测试
 	//var repositorySyncSice = []repositories.RepositoriesSync{

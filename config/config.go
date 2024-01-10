@@ -24,6 +24,7 @@ type Config struct {
 	UploadNpmRepositoryName     string `yaml:"uploadNpmRepositoryName"`
 	UploadNpmRepositoryAuth     string `yaml:"uploadNpmRepositoryAuth"`
 	TimeStep                    int    `yaml:"timeStep"`
+	Port                        int    `yaml:"port"`
 }
 
 func init() {
