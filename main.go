@@ -28,7 +28,7 @@ func initDB() *gorm.DB {
 	return db
 }
 
-func Syncrepository(r repositories.RepositoriesSync, db *gorm.DB) {
+func RepositorySync(r repositories.RepositoriesSync, db *gorm.DB) {
 	for {
 		r.DownloadRepository.Promote("开始获取组件清单")
 		if err := r.DownloadRepository.GetComponents(db); err != nil {
@@ -58,11 +58,11 @@ func Syncrepository(r repositories.RepositoriesSync, db *gorm.DB) {
 	}
 }
 
-func forever() {
-	for {
-		time.Sleep(time.Second)
-	}
-}
+//	func forever() {
+//		for {
+//			time.Sleep(time.Second)
+//		}
+//	}
 func init() {
 	err := os.MkdirAll(config.DownLoadDir, 755)
 	if err != nil {
@@ -115,7 +115,7 @@ func init() {
 
 func main() {
 	for _, repositorySync := range RepositorySyncTask {
-		go Syncrepository(repositorySync, Db)
+		go RepositorySync(repositorySync, Db)
 	}
 
 	r := web.GetRouter()
