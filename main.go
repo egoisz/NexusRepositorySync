@@ -105,8 +105,11 @@ func init() {
 		}
 
 	}
+
+	TimeStep = time.Duration(config.NexusConfig.TimeStep) * time.Second
 	log.Printf("任务执行间隔为：%v", TimeStep)
 	log.Printf("监听端口为：%d", config.NexusConfig.Port)
+
 	gin.SetMode(gin.ReleaseMode)
 }
 
