@@ -17,7 +17,8 @@
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 
 stages:          # List of stages for jobs, and their order of execution
-  - build
+  - go-build
+  - image-build
 
 
 go-build-job:       # This job runs in the build stage, which runs first.
@@ -34,14 +35,13 @@ go-build-job:       # This job runs in the build stage, which runs first.
     - target/
 
 docker-build-job:
-  stage: build
+  stage: image-build
   image: docker:24-git
   services:
     - name: docker:24-dind
       alias: docker
   script:
     - ls 
-    - ls target
     - docker ps
     - docker images
-
+    - ls target
