@@ -37,10 +37,11 @@ docker-build-job:
   stage: build
   image: docker:24-git
   services:
-    - docker:24-dind
+    - name: docker:24-dind
+      alias: docker
   script:
     - ls 
+    - ls target
     - docker ps
     - docker images
-    - ls target
 
