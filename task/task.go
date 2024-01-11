@@ -16,7 +16,7 @@ func RepositorySync(r repositories.RepositoriesSync, db *gorm.DB) {
 			r.DownloadRepository.Promote(err.Error())
 			r.DownloadRepository.Promote("获取组件中断")
 		} else {
-			r.DownloadRepository.Promote("获取组j件清单结束")
+			r.DownloadRepository.Promote("获取组件清单结束")
 		}
 
 		r.DownloadRepository.Promote("开始下载组件")

@@ -11,10 +11,8 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"os"
-	"time"
 )
 
-var TimeStep time.Duration
 var Db = initDB()
 
 func initDB() *gorm.DB {
@@ -33,8 +31,7 @@ func init() {
 		log.Panic(err)
 	}
 
-	TimeStep = time.Duration(config.NexusConfig.TimeStep) * time.Second
-	log.Printf("任务执行间隔为：%v", TimeStep)
+	log.Printf("任务执行间隔为：%v", task.TimeStep)
 	log.Printf("监听端口为：%d", config.NexusConfig.Port)
 
 	gin.SetMode(gin.ReleaseMode)
