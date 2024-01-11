@@ -22,7 +22,7 @@ stages:          # List of stages for jobs, and their order of execution
 
 go-build-job:       # This job runs in the build stage, which runs first.
   stage: build
-  image: go:1.20
+  image: golang:1.20
   before_script:
     - go env -w GOPROXY=https://goproxy.cn,direct
     - go env -w CGO_ENABLED=1
