@@ -42,6 +42,6 @@ docker-build-job:
       alias: docker
   script:
     - ls 
+    - ls target
     - docker ps
     - docker images
-    - ls target
