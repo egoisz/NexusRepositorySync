@@ -31,6 +31,7 @@ go-build-job:       # This job runs in the build stage, which runs first.
     - mkdir -p target
     - go build -o target/NexusRepositorySync
   artifacts:
+    expire_in: 10 days
     paths:
     - target/
 
