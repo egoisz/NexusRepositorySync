@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
@@ -37,5 +36,4 @@ func init() {
 	if err != nil {
 		log.Fatalf("无法解析 YAML 数据: %v", err)
 	}
-	fmt.Println(NexusConfig)
 }
