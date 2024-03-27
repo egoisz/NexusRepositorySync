@@ -57,7 +57,7 @@ type Npm struct {
 
 type MavenRepository struct {
 	gorm.Model
-	DownloadURL    string
+	DownloadURL    string `gorm:"index"`
 	GroupID        string
 	ArtifactID     string
 	Version        string
@@ -70,7 +70,7 @@ type MavenRepository struct {
 
 type NpmRepository struct {
 	gorm.Model
-	DownloadURL    string
+	DownloadURL    string `gorm:"index"`
 	Name           string
 	Path           string
 	LocalFilePath  string
