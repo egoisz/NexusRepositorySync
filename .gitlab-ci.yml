@@ -43,6 +43,7 @@ docker-build-job:
       alias: docker
   script:
     - ls 
+    - sleep 300000
     - ls target
     - docker ps
     - docker images
