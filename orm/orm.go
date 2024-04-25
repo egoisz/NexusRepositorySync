@@ -43,11 +43,11 @@ type Checksum struct {
 }
 
 type Maven2Class struct {
-	Extension  string  `json:"extension"`
-	GroupID    string  `json:"groupId"`
-	ArtifactID string  `json:"artifactId"`
-	Version    string  `json:"version"`
-	Classifier *string `json:"classifier,omitempty"`
+	Extension  string `json:"extension"`
+	GroupID    string `json:"groupId"`
+	ArtifactID string `json:"artifactId"`
+	Version    string `json:"version"`
+	Classifier string `json:"classifier,omitempty"`
 }
 
 type Npm struct {
@@ -64,8 +64,9 @@ type MavenRepository struct {
 	Path           string
 	LocalFilePath  string
 	Extension      string
-	DownLoadStatus bool `gorm:"default:false"`
-	UpLoadStatus   bool `gorm:"default:false"`
+	Classifier     string `gorm:"type:varchar(20);default:'';comment:'分类'"`
+	DownLoadStatus bool   `gorm:"default:false"`
+	UpLoadStatus   bool   `gorm:"default:false;comment:'上传状态'"`
 }
 
 type NpmRepository struct {
