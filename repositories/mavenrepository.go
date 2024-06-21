@@ -70,6 +70,7 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 					ArtifactID:    asset.Maven2.ArtifactID,
 					Version:       asset.Maven2.Version,
 					Extension:     asset.Maven2.Extension,
+					Classifier:    asset.Maven2.Classifier,
 				})
 				//err := HttpGet(v.DownloadURL, v.Path)
 				if err != nil {
@@ -132,6 +133,7 @@ func (r MavenRepository) UploadComponents(db *gorm.DB) error {
 			v.ArtifactID,
 			v.Version,
 			v.Extension,
+			v.Classifier,
 		)
 		if err != nil {
 			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n", v.LocalFilePath, err))
@@ -160,6 +162,7 @@ func MavenComponentHttpPost(
 	artifactId string,
 	version string,
 	extension string,
+	classifier string,
 ) error {
 	//url := "http://10.147.235.204:8081/service/rest/v1/components?repository=inner-maven-public"
 
@@ -170,6 +173,9 @@ func MavenComponentHttpPost(
 	_ = writer.WriteField("maven2.groupId", groupId)
 	_ = writer.WriteField("maven2.artifactId", artifactId)
 	_ = writer.WriteField("maven2.version", version)
+	if classifier != "" {
+		_ = writer.WriteField("maven2.asset1.classifier", classifier)
+	}
 	file, errFile4 := os.Open(filePath)
 	defer file.Close()
 	part4, errFile4 := writer.CreateFormFile("maven2.asset1", filepath.Base(filePath))
