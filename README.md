@@ -37,18 +37,23 @@ downloadPath: "testdownload"
 # http监听端口
 port: 18090
 ```
+### 2.创建本地文件目录
+根据配置中的`downloadPath`和`dbPath`字段创建本地文件目录
 
-### 2.二进制启动
+### 3.守护模式启动(执行目录下需存在上述配置文件)
 ```bash
 ./NexusRepositorySync
 ```
-
-### 3.本地文件
-程序启动后会在本地启动以下文件
-- `download`目录：本地存储远端仓库下载的制品文件
-- `nexus.db`：sqlite数据库,存储制品文件的下载上传状态
-
 ### 4.访问健康检查接口
 ```bash
 curl 127.0.0.1:18090/health
 ```
+### 5.使用子命令进行单次下载或者上传
+```bash
+# 下载仓库文件
+./NexusRepositorySync download
+
+# 上传仓库文件
+./NexusRepositorySync upload
+```
+
