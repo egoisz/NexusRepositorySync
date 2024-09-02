@@ -7,6 +7,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,50 @@ func initDB(dbPath string) *gorm.DB {
 	_ = db.AutoMigrate(&orm.MavenRepository{})
 	_ = db.AutoMigrate(&orm.NpmRepository{})
 	return db
+}
+
+func RepositoryDownload(r repositories.RepositoriesSync, wg *sync.WaitGroup) {
+	defer wg.Done()
+	dbPath := config.NexusConfig.DbPath
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		r.DownloadRepository.Promote("数据库文件不存在,跳过本次同步")
+		return
+	}
+	db := initDB(dbPath)
+
+	r.DownloadRepository.Promote("开始获取组件清单")
+	if err := r.DownloadRepository.GetComponents(db); err != nil {
+		r.DownloadRepository.Promote(err.Error())
+		r.DownloadRepository.Promote("获取组件中断")
+	} else {
+		r.DownloadRepository.Promote("获取组件清单结束")
+	}
+
+	r.DownloadRepository.Promote("开始下载组件")
+	if err := r.DownloadRepository.DownloadComponents(db); err != nil {
+		r.DownloadRepository.Promote(err.Error())
+		r.DownloadRepository.Promote("下载组件中断")
+	} else {
+		r.DownloadRepository.Promote("下载组件结束")
+	}
+}
+
+func RepositoryUpload(r repositories.RepositoriesSync, wg *sync.WaitGroup) {
+	defer wg.Done()
+	dbPath := config.NexusConfig.DbPath
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		r.DownloadRepository.Promote("数据库文件不存在,跳过本次同步")
+		return
+	}
+	db := initDB(dbPath)
+	r.UploadRepository.Promote("开始上传组件")
+	if err := r.UploadRepository.UploadComponents(db); err != nil {
+		r.UploadRepository.Promote(err.Error())
+		r.UploadRepository.Promote("上传组件中断")
+	} else {
+		r.DownloadRepository.Promote("上传组件结束")
+	}
+
 }
 
 func RepositorySync(r repositories.RepositoriesSync) {
