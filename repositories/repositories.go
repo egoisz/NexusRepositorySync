@@ -83,6 +83,6 @@ func httpCodeCheck(statusCode int) error {
 }
 
 func GetLocalFilePath(repositoryName string, assetPath string) string {
-	localFilePath := filepath.Join(config.DownLoadDir, repositoryName, assetPath)
+	localFilePath := filepath.Join(config.NexusConfig.DownloadPath, repositoryName, assetPath)
 	return localFilePath
 }

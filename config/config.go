@@ -23,6 +23,8 @@ type Config struct {
 	RepositorySyncTask []RepositorySync `yaml:"repositorySyncTask"`
 	TimeStep           int              `yaml:"timeStep"`
 	Port               int              `yaml:"port"`
+	DbPath             string           `yaml:"dbPath"`
+	DownloadPath       string           `yaml:"downloadPath"`
 }
 
 func init() {

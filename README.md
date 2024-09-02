@@ -26,7 +26,13 @@ repositorySyncTask:
     repositoryType: "npm"
 
 # 任务执行间隔 单位秒
-timeStep: 20
+timeStep: 30
+# 端口
+port: 18090
+# 数据库路径
+dbPath: "./db/nexus.db"
+# 下载目录
+downloadPath: "testdownload"
 
 # http监听端口
 port: 18090

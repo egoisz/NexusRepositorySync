@@ -2,15 +2,36 @@ package task
 
 import (
 	"NexusRepositorySync/config"
+	"NexusRepositorySync/orm"
 	"NexusRepositorySync/repositories"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"os"
 	"time"
 )
 
 var TimeStep = time.Duration(config.NexusConfig.TimeStep) * time.Second
 
-func RepositorySync(r repositories.RepositoriesSync, db *gorm.DB) {
+func initDB(dbPath string) *gorm.DB {
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	_ = db.AutoMigrate(&orm.MavenRepository{})
+	_ = db.AutoMigrate(&orm.NpmRepository{})
+	return db
+}
+
+func RepositorySync(r repositories.RepositoriesSync) {
 	for {
+		dbPath := config.NexusConfig.DbPath
+		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+			r.DownloadRepository.Promote("数据库文件不存在,跳过本次同步")
+			time.Sleep(TimeStep)
+			continue
+		}
+		db := initDB(dbPath)
+
 		r.DownloadRepository.Promote("开始获取组件清单")
 		if err := r.DownloadRepository.GetComponents(db); err != nil {
 			r.DownloadRepository.Promote(err.Error())
