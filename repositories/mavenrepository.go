@@ -26,7 +26,7 @@ type MavenRepository struct {
 func (r MavenRepository) GetComponents(db *gorm.DB) error {
 	method := "GET"
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	cTK := ""
 	//var itermSlice []orm.Item
@@ -46,8 +46,10 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 
 		res, err := client.Do(req)
 		if err != nil {
-			//log.Printf("%s\n", err)
-			return err
+			// 超时打印日志继续，不退出
+			r.Promote(err.Error())
+			continue
+			//return err
 		}
 		var t orm.NexusRequest
 		err = json.NewDecoder(res.Body).Decode(&t)
@@ -115,7 +117,7 @@ func (r MavenRepository) UploadComponents(db *gorm.DB) error {
 
 	var n []orm.MavenRepository
 	db.Where(
-		"down_load_status =? and up_load_status =?", true, false,
+		"down_load_status =? and up_load_status =? and up_load_times <?", true, false, 3,
 	).Where(
 		"extension =? or extension=?", "pom", "jar").Find(&n)
 	for _, v := range n {
@@ -138,6 +140,7 @@ func (r MavenRepository) UploadComponents(db *gorm.DB) error {
 		if err != nil {
 			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n", v.LocalFilePath, err))
 			if err.Error() == HttpStatusCodeError {
+				db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{UpLoadTimes: v.UpLoadTimes + 1})
 				continue
 			} else if err.Error() == ConnectError {
 				return err

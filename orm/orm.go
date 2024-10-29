@@ -67,6 +67,7 @@ type MavenRepository struct {
 	Classifier     string `gorm:"type:varchar(20);default:'';comment:'分类'"`
 	DownLoadStatus bool   `gorm:"default:false"`
 	UpLoadStatus   bool   `gorm:"default:false;comment:'上传状态'"`
+	UpLoadTimes    int    `gorm:"default:0;comment:'上传次数'"`
 }
 
 type NpmRepository struct {
@@ -78,4 +79,5 @@ type NpmRepository struct {
 	Version        string
 	DownLoadStatus bool `gorm:"default:false"`
 	UpLoadStatus   bool `gorm:"default:false"`
+	UpLoadTimes    int  `gorm:"default:0;comment:'上传次数'"`
 }

@@ -26,7 +26,7 @@ type NpmRepository struct {
 func (r NpmRepository) GetComponents(db *gorm.DB) error {
 	method := "GET"
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	cTK := ""
 
@@ -46,8 +46,10 @@ func (r NpmRepository) GetComponents(db *gorm.DB) error {
 
 		res, err := client.Do(req)
 		if err != nil {
-			//r.Promote(err.Error())
-			return err
+			// 超时打印日志继续，不退出
+			r.Promote(err.Error())
+			continue
+			//return err
 		}
 		var t orm.NexusRequest
 		err = json.NewDecoder(res.Body).Decode(&t)
