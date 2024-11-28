@@ -50,6 +50,9 @@ curl 127.0.0.1:18090/health
 ```
 ### 5.使用子命令进行单次下载或者上传
 ```bash
+# 检索仓库文件至本地数据库中
+./NexusRepositorySync search
+
 # 下载仓库文件
 ./NexusRepositorySync download
 
