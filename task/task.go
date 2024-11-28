@@ -23,7 +23,7 @@ func initDB(dbPath string) *gorm.DB {
 	return db
 }
 
-func RepositoryDownload(r repositories.RepositoriesSync, wg *sync.WaitGroup) {
+func RepositorySearch(r repositories.RepositoriesSync, wg *sync.WaitGroup) {
 	defer wg.Done()
 	dbPath := config.NexusConfig.DbPath
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
@@ -39,6 +39,16 @@ func RepositoryDownload(r repositories.RepositoriesSync, wg *sync.WaitGroup) {
 	} else {
 		r.DownloadRepository.Promote("获取组件清单结束")
 	}
+}
+
+func RepositoryDownload(r repositories.RepositoriesSync, wg *sync.WaitGroup) {
+	defer wg.Done()
+	dbPath := config.NexusConfig.DbPath
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		r.DownloadRepository.Promote("数据库文件不存在,跳过本次同步")
+		return
+	}
+	db := initDB(dbPath)
 
 	r.DownloadRepository.Promote("开始下载组件")
 	if err := r.DownloadRepository.DownloadComponents(db); err != nil {

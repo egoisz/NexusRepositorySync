@@ -29,13 +29,11 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 		Timeout: 10 * time.Second,
 	}
 	cTK := ""
-	//var itermSlice []orm.Item
 	for {
 		url := fmt.Sprintf("%s/service/rest/v1/components?repository=%s", r.Url, r.Name)
 		if cTK != "" {
 			url = fmt.Sprintf("%s&&continuationToken=%s", url, cTK)
 		}
-		//fmt.Println(url)
 		req, err := http.NewRequest(method, url, nil)
 
 		if err != nil {
@@ -63,6 +61,9 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 		}
 		for _, item := range t.Items {
 			for _, asset := range item.Assets {
+				if asset.Maven2.Extension != "pom" && asset.Maven2.Extension != "jar" {
+					continue
+				}
 				localFilePath := GetLocalFilePath(r.Name, asset.Path)
 				db.Where(orm.MavenRepository{DownloadURL: asset.DownloadURL}).FirstOrCreate(&orm.MavenRepository{
 					DownloadURL:   asset.DownloadURL,
@@ -94,8 +95,6 @@ func (r MavenRepository) DownloadComponents(db *gorm.DB) error {
 	db.Where("down_load_status =?", false).Find(&t)
 	//fmt.Println(n)
 	for _, v := range t {
-		//fmt.Println(v.DownloadURL, v.DownLoadStatus)
-		//filePath := path.Join(config.DownLoadDir, r.Name, v.Path)
 		err := httpGet(v.DownloadURL, v.LocalFilePath)
 		if err != nil {
 			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
@@ -121,12 +120,9 @@ func (r MavenRepository) UploadComponents(db *gorm.DB) error {
 	).Where(
 		"extension =? or extension=?", "pom", "jar").Find(&n)
 	for _, v := range n {
-		//url := http://10.147.235.204:8081/service/rest/v1/components?repository=inner-maven-public
 		url := fmt.Sprintf("%s/service/rest/v1/components?repository=%s", r.Url, r.Name)
 
-		//auth := "Basic YWRtaW46WXl5dEBuZXh1c0AyMDIz"
 		auth := fmt.Sprintf("Basic %s", r.Auth)
-		//fmt.Println(v.DownloadURL, v.DownLoadStatus, v.Extension, v.UpLoadStatus)
 		err := MavenComponentHttpPost(
 			url,
 			auth,
@@ -167,7 +163,6 @@ func MavenComponentHttpPost(
 	extension string,
 	classifier string,
 ) error {
-	//url := "http://10.147.235.204:8081/service/rest/v1/components?repository=inner-maven-public"
 
 	method := "POST"
 
@@ -205,7 +200,6 @@ func MavenComponentHttpPost(
 	}
 	req.Header.Add("accept", " application/json")
 	req.Header.Add("Content-Type", "multipart/form-data")
-	//req.Header.Add("Authorization", "Basic YWRtaW46WXl5dEBuZXh1c0AyMDIz")
 	req.Header.Add("Authorization", auth)
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -220,7 +214,6 @@ func MavenComponentHttpPost(
 		return err
 	}
 	if string(body) != "" {
-		//fmt.Println(err)
 		log.Printf("return body: %s\n", string(body))
 
 	}

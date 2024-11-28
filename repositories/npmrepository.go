@@ -89,9 +89,7 @@ func (r NpmRepository) GetComponents(db *gorm.DB) error {
 func (r NpmRepository) DownloadComponents(db *gorm.DB) error {
 	var t []orm.NpmRepository
 	db.Where("down_load_status =?", false).Find(&t)
-	//fmt.Println(n)
 	for _, v := range t {
-		//fmt.Println(v.DownloadURL, v.DownLoadStatus)
 		err := httpGet(v.DownloadURL, v.LocalFilePath)
 		if err != nil {
 			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
@@ -116,12 +114,9 @@ func (r NpmRepository) UploadComponents(db *gorm.DB) error {
 		"down_load_status =? and up_load_status =?", true, false,
 	).Find(&n)
 	for _, v := range n {
-		//url := http://10.147.235.204:8081/service/rest/v1/components?repository=inner-maven-public
 		url := fmt.Sprintf("%s/service/rest/v1/components?repository=%s", r.Url, r.Name)
 
-		//auth := "Basic YWRtaW46WXl5dEBuZXh1c0AyMDIz"
 		auth := fmt.Sprintf("Basic %s", r.Auth)
-		//fmt.Println(v.DownloadURL, v.DownLoadStatus, v.Extension, v.UpLoadStatus)
 		err := NpmComponentHttpPost(
 			url,
 			auth,
@@ -180,7 +175,6 @@ func NpmComponentHttpPost(
 	}
 	req.Header.Add("accept", " application/json")
 	req.Header.Add("Content-Type", "multipart/form-data")
-	//req.Header.Add("Authorization", "Basic YWRtaW46WXl5dEBuZXh1c0AyMDIz")
 	req.Header.Add("Authorization", auth)
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -195,7 +189,6 @@ func NpmComponentHttpPost(
 		return err
 	}
 	if string(body) != "" {
-		//fmt.Println(err)
 		log.Printf("return body: %s\n", string(body))
 
 	}
