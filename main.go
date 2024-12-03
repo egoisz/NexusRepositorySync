@@ -60,6 +60,9 @@ func main() {
 	// 子命令模式运行一次
 	if len(os.Args) >= 2 {
 		switch os.Args[1] {
+		case "sd":
+			executeSearch()
+			executeDownload()
 		case "search":
 			executeSearch()
 		case "download":
@@ -67,7 +70,7 @@ func main() {
 		case "upload":
 			executeUpload()
 		default:
-			fmt.Println("expected 'search' or 'download' or 'upload' subcommands")
+			fmt.Println("expected 'sd' or 'search' or 'download' or 'upload' subcommands")
 			os.Exit(1)
 		}
 		// 子命令执行完毕，退出程序
