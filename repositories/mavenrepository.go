@@ -3,6 +3,7 @@ package repositories
 import (
 	"NexusRepositorySync/orm"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,10 +18,23 @@ import (
 )
 
 type MavenRepository struct {
-	Url  string
-	Name string
-	Type RepositoryFormat
-	Auth string
+	Url      string
+	Name     string
+	Username string
+	Password string
+	Type     RepositoryFormat
+	Auth     string
+}
+
+func (r *MavenRepository) Init() {
+	if r.Auth != "" {
+		decodedBytes, err := base64.StdEncoding.DecodeString(r.Auth)
+		if err != nil {
+			log.Fatalf("无法解码下载仓库的认证信息: %v", err)
+		}
+		r.Username = string(decodedBytes[:bytes.IndexByte(decodedBytes, ':')])
+		r.Password = string(decodedBytes[bytes.IndexByte(decodedBytes, ':')+1:])
+	}
 }
 
 func (r MavenRepository) GetComponents(db *gorm.DB) error {
@@ -41,13 +55,16 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 			continue
 		}
 		req.Header.Add("accept", "application/json")
-
+		req.SetBasicAuth(r.Username, r.Password)
 		res, err := client.Do(req)
 		if err != nil {
 			// 超时打印日志继续，不退出
 			r.Promote(err.Error())
 			continue
 			//return err
+		}
+		if err := httpCodeCheck(res.StatusCode); err != nil {
+			return err
 		}
 		var t orm.NexusRequest
 		err = json.NewDecoder(res.Body).Decode(&t)
@@ -95,7 +112,7 @@ func (r MavenRepository) DownloadComponents(db *gorm.DB) error {
 	db.Where("down_load_status =?", false).Find(&t)
 	//fmt.Println(n)
 	for _, v := range t {
-		err := httpGet(v.DownloadURL, v.LocalFilePath)
+		err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
 		if err != nil {
 			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
 			if err.Error() == HttpStatusCodeError {

@@ -26,6 +26,7 @@ const (
 )
 
 type Repositoryer interface {
+	Init()
 	GetComponents(db *gorm.DB) error
 	DownloadComponents(db *gorm.DB) error
 	UploadComponents(db *gorm.DB) error
@@ -37,12 +38,13 @@ type RepositoriesSync struct {
 	UploadRepository   Repositoryer
 }
 
-func httpGet(url string, filePath string) error {
+func httpGet(url, filePath, username, password string) error {
 	method := "GET"
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
 	req, err := http.NewRequest(method, url, nil)
+	req.SetBasicAuth(username, password)
 	res, err := client.Do(req)
 
 	if err != nil {

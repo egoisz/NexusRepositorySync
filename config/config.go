@@ -13,6 +13,7 @@ var NexusConfig Config
 type RepositorySync struct {
 	DownRepositoryUrl    string `yaml:"downRepositoryUrl"`
 	DownRepositoryName   string `yaml:"downRepositoryName"`
+	DownRepositoryAuth   string `yaml:"downRepositoryAuth"`
 	UploadRepositoryUrl  string `yaml:"uploadRepositoryUrl"`
 	UploadRepositoryName string `yaml:"uploadRepositoryName"`
 	UploadRepositoryAuth string `yaml:"uploadRepositoryAuth"`

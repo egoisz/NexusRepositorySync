@@ -118,41 +118,46 @@ func RepositorySync(r repositories.RepositoriesSync) {
 func GetRepositorySyncTasks() []repositories.RepositoriesSync {
 	var repositorySyncTask []repositories.RepositoriesSync
 	for _, task := range config.NexusConfig.RepositorySyncTask {
-		if task.RepositoryType == string(repositories.Maven2) {
-			dRepository := repositories.MavenRepository{
+		var dRepository, uRepository repositories.Repositoryer
+		switch task.RepositoryType {
+		case string(repositories.Maven2):
+			dRepository = &repositories.MavenRepository{
 				Url:  task.DownRepositoryUrl,
 				Name: task.DownRepositoryName,
+				Auth: task.DownRepositoryAuth,
 				Type: repositories.Maven2,
 			}
-			uRepository := repositories.MavenRepository{
+			uRepository = &repositories.MavenRepository{
 				Url:  task.UploadRepositoryUrl,
 				Name: task.UploadRepositoryName,
 				Auth: task.UploadRepositoryAuth,
 				Type: repositories.Maven2,
 			}
-			repositorySyncTask = append(repositorySyncTask, repositories.RepositoriesSync{
-				DownloadRepository: dRepository,
-				UploadRepository:   uRepository,
-			})
 
-		} else if task.RepositoryType == string(repositories.Npm) {
-			dRepository := repositories.NpmRepository{
+		case string(repositories.Npm):
+			dRepository = &repositories.NpmRepository{
 				Url:  task.DownRepositoryUrl,
 				Name: task.DownRepositoryName,
+				Auth: task.DownRepositoryAuth,
 				Type: repositories.Npm,
 			}
-			uRepository := repositories.NpmRepository{
+			uRepository = &repositories.NpmRepository{
 				Url:  task.UploadRepositoryUrl,
 				Name: task.UploadRepositoryName,
 				Auth: task.UploadRepositoryAuth,
 				Type: repositories.Npm,
 			}
-			repositorySyncTask = append(repositorySyncTask, repositories.RepositoriesSync{
-				DownloadRepository: dRepository,
-				UploadRepository:   uRepository,
-			})
+		default:
+			continue // 如果是未知类型，跳过
 		}
 
+		dRepository.Init()
+		uRepository.Init()
+		repositorySyncTask = append(repositorySyncTask, repositories.RepositoriesSync{
+			DownloadRepository: dRepository,
+			UploadRepository:   uRepository,
+		})
 	}
+
 	return repositorySyncTask
 }
