@@ -57,6 +57,7 @@ type Npm struct {
 
 type MavenRepository struct {
 	gorm.Model
+	TaskName       string `gorm:"index"`
 	DownloadURL    string `gorm:"index"`
 	GroupID        string
 	ArtifactID     string
@@ -72,6 +73,7 @@ type MavenRepository struct {
 
 type NpmRepository struct {
 	gorm.Model
+	TaskName       string `gorm:"index"`
 	DownloadURL    string `gorm:"index"`
 	Name           string
 	Path           string

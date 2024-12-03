@@ -27,15 +27,16 @@ const (
 
 type Repositoryer interface {
 	Init()
-	GetComponents(db *gorm.DB) error
-	DownloadComponents(db *gorm.DB) error
-	UploadComponents(db *gorm.DB) error
+	GetComponents(db *gorm.DB, taskName string) error
+	DownloadComponents(db *gorm.DB, taskName string) error
+	UploadComponents(db *gorm.DB, taskName string) error
 	Promote(s string)
 }
 
 type RepositoriesSync struct {
 	DownloadRepository Repositoryer
 	UploadRepository   Repositoryer
+	TaskName           string
 }
 
 func httpGet(url, filePath, username, password string) error {

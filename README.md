@@ -10,22 +10,39 @@ echo -n "admin:12345" | base64
 ```
 repositorySyncTask:
   # maven同步
-  - downRepositoryUrl: "http://172.30.86.136:8081"
-    downRepositoryName: "sync-maven-public"
+  - taskName: "maven-sync-1"                              # 不能重复
+    downRepositoryUrl: "http://172.30.86.136:8081"
+    downRepositoryName: "sync-maven-public-1"
     downRepositoryAuth: "YWRtasadasd5dEBuZXh1c0AyMDIz"  # optional
     uploadRepositoryUrl: "http://10.147.235.204:8081"
-    uploadRepositoryName: "inner-maven-public"
+    uploadRepositoryName: "inner-maven-public-1"
+    uploadRepositoryAuth: "YWRtasadasd5dEBuZXh1c0AyMDIz"
+    repositoryType: "maven2"
+  - taskName: "maven-sync-2"                              # 不能重复
+    downRepositoryUrl: "http://172.30.86.136:8081"
+    downRepositoryName: "sync-maven-public-2"
+    downRepositoryAuth: "YWRtasadasd5dEBuZXh1c0AyMDIz"  # optional
+    uploadRepositoryUrl: "http://10.147.235.204:8081"
+    uploadRepositoryName: "inner-maven-public-2"
     uploadRepositoryAuth: "YWRtasadasd5dEBuZXh1c0AyMDIz"
     repositoryType: "maven2"
     
   # npm 同步
-  - downRepositoryUrl: "http://172.30.86.136:8081"
-    downRepositoryName: "sync-npm-public"
+  - taskName: "npm-sync-1"
+    downRepositoryUrl: "http://172.30.86.136:8081"
+    downRepositoryName: "sync-npm-public-1"
     uploadRepositoryUrl: "http://10.147.235.204:8081"
-    uploadRepositoryName: "inner-npm-public"
+    uploadRepositoryName: "inner-npm-public-1"
     uploadRepositoryAuth: "YWRtaW46WasdasBuZXh1c0AyMDIz"
     repositoryType: "npm"
-
+  - taskName: "npm-sync-2"
+    downRepositoryUrl: "http://172.30.86.136:8081"
+    downRepositoryName: "sync-npm-public-2"
+    uploadRepositoryUrl: "http://10.147.235.204:8081"
+    uploadRepositoryName: "inner-npm-public-2"
+    uploadRepositoryAuth: "YWRtaW46WasdasBuZXh1c0AyMDIz"
+    repositoryType: "npm"
+    
 # 守护模式下任务执行间隔 单位秒
 timeStep: 30
 # 端口

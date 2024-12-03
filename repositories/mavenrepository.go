@@ -37,7 +37,7 @@ func (r *MavenRepository) Init() {
 	}
 }
 
-func (r MavenRepository) GetComponents(db *gorm.DB) error {
+func (r MavenRepository) GetComponents(db *gorm.DB, taskName string) error {
 	method := "GET"
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -83,6 +83,7 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 				}
 				localFilePath := GetLocalFilePath(r.Name, asset.Path)
 				db.Where(orm.MavenRepository{DownloadURL: asset.DownloadURL}).FirstOrCreate(&orm.MavenRepository{
+					TaskName:      taskName,
 					DownloadURL:   asset.DownloadURL,
 					Path:          asset.Path,
 					LocalFilePath: localFilePath,
@@ -107,9 +108,9 @@ func (r MavenRepository) GetComponents(db *gorm.DB) error {
 	return nil
 }
 
-func (r MavenRepository) DownloadComponents(db *gorm.DB) error {
+func (r MavenRepository) DownloadComponents(db *gorm.DB, taskName string) error {
 	var t []orm.MavenRepository
-	db.Where("down_load_status =?", false).Find(&t)
+	db.Where("down_load_status =? and task_name =?", false, taskName).Find(&t)
 	//fmt.Println(n)
 	for _, v := range t {
 		err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
@@ -129,11 +130,11 @@ func (r MavenRepository) DownloadComponents(db *gorm.DB) error {
 	return nil
 }
 
-func (r MavenRepository) UploadComponents(db *gorm.DB) error {
+func (r MavenRepository) UploadComponents(db *gorm.DB, taskName string) error {
 
 	var n []orm.MavenRepository
 	db.Where(
-		"down_load_status =? and up_load_status =? and up_load_times <?", true, false, 3,
+		"task_name =? and down_load_status =? and up_load_status =? and up_load_times <?", taskName, true, false, 3,
 	).Where(
 		"extension =? or extension=?", "pom", "jar").Find(&n)
 	for _, v := range n {

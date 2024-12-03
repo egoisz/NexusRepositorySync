@@ -37,7 +37,7 @@ func (r *NpmRepository) Init() {
 	}
 }
 
-func (r NpmRepository) GetComponents(db *gorm.DB) error {
+func (r NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 	method := "GET"
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -82,6 +82,7 @@ func (r NpmRepository) GetComponents(db *gorm.DB) error {
 			for _, asset := range item.Assets {
 				localFilePath := GetLocalFilePath(r.Name, asset.Path)
 				db.Where(orm.NpmRepository{DownloadURL: asset.DownloadURL}).FirstOrCreate(&orm.NpmRepository{
+					TaskName:      taskName,
 					DownloadURL:   asset.DownloadURL,
 					Name:          asset.Npm.Name,
 					LocalFilePath: localFilePath,
@@ -103,9 +104,9 @@ func (r NpmRepository) GetComponents(db *gorm.DB) error {
 	return nil
 }
 
-func (r NpmRepository) DownloadComponents(db *gorm.DB) error {
+func (r NpmRepository) DownloadComponents(db *gorm.DB, taskName string) error {
 	var t []orm.NpmRepository
-	db.Where("down_load_status =?", false).Find(&t)
+	db.Where("down_load_status =? and task_name =?", false, taskName).Find(&t)
 	for _, v := range t {
 		err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
 		if err != nil {
@@ -124,11 +125,11 @@ func (r NpmRepository) DownloadComponents(db *gorm.DB) error {
 	return nil
 }
 
-func (r NpmRepository) UploadComponents(db *gorm.DB) error {
+func (r NpmRepository) UploadComponents(db *gorm.DB, taskName string) error {
 
 	var n []orm.NpmRepository
 	db.Where(
-		"down_load_status =? and up_load_status =?", true, false,
+		"down_load_status =? and up_load_status =? and task_name =? and up_load_times <?", true, false, taskName, 3,
 	).Find(&n)
 	for _, v := range n {
 		url := fmt.Sprintf("%s/service/rest/v1/components?repository=%s", r.Url, r.Name)
@@ -141,6 +142,7 @@ func (r NpmRepository) UploadComponents(db *gorm.DB) error {
 		if err != nil {
 			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err))
 			if err.Error() == HttpStatusCodeError {
+				db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{UpLoadTimes: v.UpLoadTimes + 1})
 				continue
 			} else if err.Error() == ConnectError {
 				return err

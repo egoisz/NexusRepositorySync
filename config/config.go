@@ -11,6 +11,7 @@ const DownLoadDir = "download"
 var NexusConfig Config
 
 type RepositorySync struct {
+	TaskName             string `yaml:"taskName"`
 	DownRepositoryUrl    string `yaml:"downRepositoryUrl"`
 	DownRepositoryName   string `yaml:"downRepositoryName"`
 	DownRepositoryAuth   string `yaml:"downRepositoryAuth"`

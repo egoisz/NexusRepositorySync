@@ -69,6 +69,8 @@ func main() {
 			executeDownload()
 		case "upload":
 			executeUpload()
+		case "info":
+
 		default:
 			fmt.Println("expected 'sd' or 'search' or 'download' or 'upload' subcommands")
 			os.Exit(1)
