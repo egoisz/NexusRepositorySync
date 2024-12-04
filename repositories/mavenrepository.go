@@ -37,7 +37,7 @@ func (r *MavenRepository) Init() {
 	}
 }
 
-func (r MavenRepository) GetComponents(db *gorm.DB, taskName string) error {
+func (r *MavenRepository) GetComponents(db *gorm.DB, taskName string) error {
 	method := "GET"
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -108,7 +108,7 @@ func (r MavenRepository) GetComponents(db *gorm.DB, taskName string) error {
 	return nil
 }
 
-func (r MavenRepository) DownloadComponents(db *gorm.DB, taskName string) error {
+func (r *MavenRepository) DownloadComponents(db *gorm.DB, taskName string) error {
 	var t []orm.MavenRepository
 	db.Where("down_load_status =? and task_name =?", false, taskName).Find(&t)
 	//fmt.Println(n)
@@ -130,7 +130,7 @@ func (r MavenRepository) DownloadComponents(db *gorm.DB, taskName string) error 
 	return nil
 }
 
-func (r MavenRepository) UploadComponents(db *gorm.DB, taskName string) error {
+func (r *MavenRepository) UploadComponents(db *gorm.DB, taskName string) error {
 
 	var n []orm.MavenRepository
 	db.Where(
@@ -167,7 +167,7 @@ func (r MavenRepository) UploadComponents(db *gorm.DB, taskName string) error {
 	return nil
 }
 
-func (r MavenRepository) Promote(s string) {
+func (r *MavenRepository) Promote(s string) {
 	log.Printf("%-20s %-25s %s", r.Name, r.Url, s)
 }
 

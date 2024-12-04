@@ -37,7 +37,7 @@ func (r *NpmRepository) Init() {
 	}
 }
 
-func (r NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
+func (r *NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 	method := "GET"
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -104,7 +104,7 @@ func (r NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 	return nil
 }
 
-func (r NpmRepository) DownloadComponents(db *gorm.DB, taskName string) error {
+func (r *NpmRepository) DownloadComponents(db *gorm.DB, taskName string) error {
 	var t []orm.NpmRepository
 	db.Where("down_load_status =? and task_name =?", false, taskName).Find(&t)
 	for _, v := range t {
@@ -125,7 +125,7 @@ func (r NpmRepository) DownloadComponents(db *gorm.DB, taskName string) error {
 	return nil
 }
 
-func (r NpmRepository) UploadComponents(db *gorm.DB, taskName string) error {
+func (r *NpmRepository) UploadComponents(db *gorm.DB, taskName string) error {
 
 	var n []orm.NpmRepository
 	db.Where(
@@ -155,7 +155,7 @@ func (r NpmRepository) UploadComponents(db *gorm.DB, taskName string) error {
 	return nil
 }
 
-func (r NpmRepository) Promote(s string) {
+func (r *NpmRepository) Promote(s string) {
 	log.Printf("%-20s %-25s %s", r.Name, r.Url, s)
 }
 

@@ -40,4 +40,23 @@ func init() {
 	if err != nil {
 		log.Fatalf("无法解析 YAML 数据: %v", err)
 	}
+	taskNames := make([]string, 0)
+	for _, task := range NexusConfig.RepositorySyncTask {
+		taskNames = append(taskNames, task.TaskName)
+	}
+	if containsDuplicate(taskNames) {
+		log.Fatalf("taskName不能重复")
+	}
+}
+
+func containsDuplicate(l []string) bool {
+	counter := make(map[string]int)
+	for _, value := range l {
+		if counter[value] > 0 {
+			return true
+		} else {
+			counter[value] = 1
+		}
+	}
+	return false
 }
