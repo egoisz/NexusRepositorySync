@@ -47,7 +47,7 @@ func (r *NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 	for {
 		url := fmt.Sprintf("%s/service/rest/v1/components?repository=%s", r.Url, r.Name)
 		if cTK != "" {
-			url = fmt.Sprintf("%s&&continuationToken=%s", url, cTK)
+			url = fmt.Sprintf("%s&continuationToken=%s", url, cTK)
 		}
 		//fmt.Println(url)
 		req, err := http.NewRequest(method, url, nil)
@@ -108,18 +108,21 @@ func (r *NpmRepository) DownloadComponents(db *gorm.DB, taskName string) error {
 	var t []orm.NpmRepository
 	db.Where("down_load_status =? and task_name =?", false, taskName).Find(&t)
 	for _, v := range t {
-		err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
-		if err != nil {
-			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
-			if err.Error() == HttpStatusCodeError {
-				continue
-			} else if err.Error() == ConnectError {
+		for retry := 0; retry < 3; retry++ {
+			err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
+			if err != nil {
+				r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
+				if err.Error() == HttpStatusCodeError {
+					continue
+				} else if err.Error() == ConnectError {
+					return err
+				}
 				return err
+			} else {
+				r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
+				db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})
+				break
 			}
-			return err
-		} else {
-			r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
-			db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})
 		}
 	}
 	return nil

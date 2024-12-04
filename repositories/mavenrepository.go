@@ -46,7 +46,7 @@ func (r *MavenRepository) GetComponents(db *gorm.DB, taskName string) error {
 	for {
 		url := fmt.Sprintf("%s/service/rest/v1/components?repository=%s", r.Url, r.Name)
 		if cTK != "" {
-			url = fmt.Sprintf("%s&&continuationToken=%s", url, cTK)
+			url = fmt.Sprintf("%s&continuationToken=%s", url, cTK)
 		}
 		req, err := http.NewRequest(method, url, nil)
 
@@ -113,18 +113,16 @@ func (r *MavenRepository) DownloadComponents(db *gorm.DB, taskName string) error
 	db.Where("down_load_status =? and task_name =?", false, taskName).Find(&t)
 	//fmt.Println(n)
 	for _, v := range t {
-		err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
-		if err != nil {
-			r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
-			if err.Error() == HttpStatusCodeError {
+		for retry := 0; retry < 3; retry++ {
+			err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
+			if err != nil {
+				r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
 				continue
-			} else if err.Error() == ConnectError {
-				return err
+			} else {
+				r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
+				db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
+				break
 			}
-			return err
-		} else {
-			r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
-			db.Where(orm.MavenRepository{DownloadURL: v.DownloadURL}).Updates(orm.MavenRepository{DownLoadStatus: true})
 		}
 	}
 	return nil
