@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	mylog "NexusRepositorySync/log"
 	"NexusRepositorySync/orm"
 	"bytes"
 	"encoding/base64"
@@ -53,7 +54,7 @@ func (r *NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 		req, err := http.NewRequest(method, url, nil)
 
 		if err != nil {
-			r.Promote(err.Error())
+			r.ErrorPromote(err.Error())
 			continue
 		}
 		req.Header.Add("accept", "application/json")
@@ -61,7 +62,7 @@ func (r *NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 		res, err := client.Do(req)
 		if err != nil {
 			// 超时打印日志继续，不退出
-			r.Promote(err.Error())
+			r.ErrorPromote(err.Error())
 			continue
 			//return err
 		}
@@ -71,12 +72,12 @@ func (r *NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 		var t orm.NexusRequest
 		err = json.NewDecoder(res.Body).Decode(&t)
 		if err != nil {
-			r.Promote(err.Error())
+			r.ErrorPromote(err.Error())
 		}
 
 		err = res.Body.Close()
 		if err != nil {
-			r.Promote(err.Error())
+			r.ErrorPromote(err.Error())
 		}
 		for _, item := range t.Items {
 			for _, asset := range item.Assets {
@@ -88,10 +89,11 @@ func (r *NpmRepository) GetComponents(db *gorm.DB, taskName string) error {
 					LocalFilePath: localFilePath,
 					Path:          asset.Path,
 					Version:       asset.Npm.Version,
+					Sha1:          asset.Checksum.Sha1,
 				})
 				//err := HttpGet(v.DownloadURL, v.Path)
 				if err != nil {
-					r.Promote(err.Error())
+					r.ErrorPromote(err.Error())
 				}
 			}
 		}
@@ -111,18 +113,21 @@ func (r *NpmRepository) DownloadComponents(db *gorm.DB, taskName string) error {
 		for retry := 0; retry < 3; retry++ {
 			err := httpGet(v.DownloadURL, v.LocalFilePath, r.Username, r.Password)
 			if err != nil {
-				r.Promote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
-				if err.Error() == HttpStatusCodeError {
-					continue
-				} else if err.Error() == ConnectError {
-					return err
-				}
-				return err
-			} else {
-				r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
-				db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})
-				break
+				r.ErrorPromote(fmt.Sprintf("下载失败：%s 原因：%s\n", v.DownloadURL, err.Error()))
+				continue
 			}
+			r.Promote(fmt.Sprintf("下载完成 %s，%s\n", v.DownloadURL, v.LocalFilePath))
+			fileSha1, err := CalculateFileSHA1(v.LocalFilePath)
+			if err != nil {
+				r.ErrorPromote(fmt.Sprintf("计算文件 %s 的 SHA1 失败：%s\n", v.LocalFilePath, err.Error()))
+				continue
+			}
+			if fileSha1 != v.Sha1 {
+				r.ErrorPromote(fmt.Sprintf("下载文件 %s 的 SHA1 校验失败：远端 %s 本地 %s\n", v.LocalFilePath, v.Sha1, fileSha1))
+				continue
+			}
+			db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{DownLoadStatus: true})
+			break
 		}
 	}
 	return nil
@@ -143,7 +148,7 @@ func (r *NpmRepository) UploadComponents(db *gorm.DB, taskName string) error {
 			auth,
 			v.LocalFilePath)
 		if err != nil {
-			r.Promote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err))
+			r.ErrorPromote(fmt.Sprintf("上传 %s 失败, 失败原因：%s\n,", v.LocalFilePath, err))
 			if err.Error() == HttpStatusCodeError {
 				db.Where(orm.NpmRepository{DownloadURL: v.DownloadURL}).Updates(orm.NpmRepository{UpLoadTimes: v.UpLoadTimes + 1})
 				continue
@@ -159,7 +164,11 @@ func (r *NpmRepository) UploadComponents(db *gorm.DB, taskName string) error {
 }
 
 func (r *NpmRepository) Promote(s string) {
-	log.Printf("%-20s %-25s %s", r.Name, r.Url, s)
+	mylog.Info.Printf("%-20s %-25s %s", r.Name, r.Url, s)
+}
+
+func (r *NpmRepository) ErrorPromote(s string) {
+	mylog.Error.Printf("%-20s %-25s \033[31m%s\033[0m", r.Name, r.Url, s)
 }
 
 func NpmComponentHttpPost(

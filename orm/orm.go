@@ -69,6 +69,7 @@ type MavenRepository struct {
 	DownLoadStatus bool   `gorm:"default:false"`
 	UpLoadStatus   bool   `gorm:"default:false;comment:'上传状态'"`
 	UpLoadTimes    int    `gorm:"default:0;comment:'上传次数'"`
+	Sha1           string `gorm:"type:varchar(40);default:'';comment:'sha1值'"`
 }
 
 type NpmRepository struct {
@@ -79,7 +80,8 @@ type NpmRepository struct {
 	Path           string
 	LocalFilePath  string
 	Version        string
-	DownLoadStatus bool `gorm:"default:false"`
-	UpLoadStatus   bool `gorm:"default:false"`
-	UpLoadTimes    int  `gorm:"default:0;comment:'上传次数'"`
+	DownLoadStatus bool   `gorm:"default:false"`
+	UpLoadStatus   bool   `gorm:"default:false"`
+	UpLoadTimes    int    `gorm:"default:0;comment:'上传次数'"`
+	Sha1           string `gorm:"type:varchar(40);default:'';comment:'sha1值'"`
 }

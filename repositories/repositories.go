@@ -3,6 +3,8 @@ package repositories
 import (
 	"NexusRepositorySync/config"
 	"bufio"
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"gorm.io/gorm"
 	"io"
@@ -86,4 +88,19 @@ func httpCodeCheck(statusCode int) error {
 func GetLocalFilePath(repositoryName string, assetPath string) string {
 	localFilePath := filepath.Join(config.NexusConfig.DownloadPath, repositoryName, assetPath)
 	return localFilePath
+}
+
+// CalculateFileSHA1 计算文件的 SHA1 值
+func CalculateFileSHA1(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hasher := sha1.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
