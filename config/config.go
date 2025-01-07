@@ -27,6 +27,7 @@ type Config struct {
 	Port               int              `yaml:"port"`
 	DbPath             string           `yaml:"dbPath"`
 	DownloadPath       string           `yaml:"downloadPath"`
+	MavenFileSuffix    []string         `yaml:"mavenFileSuffix"`
 }
 
 func init() {

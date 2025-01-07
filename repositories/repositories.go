@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 type RepositoryFormat string
@@ -44,7 +43,8 @@ type RepositoriesSync struct {
 func httpGet(url, filePath, username, password string) error {
 	method := "GET"
 	client := http.Client{
-		Timeout: 5 * time.Second,
+		//Timeout: 5 * time.Second,
+		Timeout: 0,
 	}
 	req, err := http.NewRequest(method, url, nil)
 	req.SetBasicAuth(username, password)
@@ -103,4 +103,13 @@ func CalculateFileSHA1(filePath string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func checkMavenFileSuffix(s string) bool {
+	for _, item := range config.NexusConfig.MavenFileSuffix {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }

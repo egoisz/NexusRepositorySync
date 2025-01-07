@@ -79,7 +79,7 @@ func (r *MavenRepository) GetComponents(db *gorm.DB, taskName string) error {
 		}
 		for _, item := range t.Items {
 			for _, asset := range item.Assets {
-				if asset.Maven2.Extension != "pom" && asset.Maven2.Extension != "jar" {
+				if !checkMavenFileSuffix(asset.Maven2.Extension) {
 					continue
 				}
 				localFilePath := GetLocalFilePath(r.Name, asset.Path)
@@ -221,7 +221,8 @@ func MavenComponentHttpPost(
 	}
 
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		//Timeout: 5 * time.Second,
+		Timeout: 0,
 	}
 	req, err := http.NewRequest(method, url, payload)
 

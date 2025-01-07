@@ -196,7 +196,8 @@ func NpmComponentHttpPost(
 	}
 
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		//Timeout: 5 * time.Second,
+		Timeout: 0,
 	}
 	req, err := http.NewRequest(method, url, payload)
 

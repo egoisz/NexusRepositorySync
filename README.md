@@ -51,7 +51,10 @@ port: 18090
 dbPath: "./db/nexus.db"
 # 下载目录
 downloadPath: "testdownload"
-
+# 匹配需要下载的maven仓库的文件后缀
+mavenFileSuffix:
+  - "jar"
+  - "pom"
 # http监听端口
 port: 18090
 ```
