@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
   pull_request:
     branches:
       - main
@@ -17,8 +19,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build and test
+  build-linux:
+    name: Build and test (Linux AMD64)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -66,5 +68,109 @@ jobs:
       - name: Test
         run: go test -race -coverprofile=coverage.out ./...
 
-      - name: Build
-        run: go build -trimpath -o bin/nexus-repository-sync .
+      - name: Build Linux executable
+        run: |
+          mkdir -p bin dist
+          go build -trimpath -o bin/NexusRepositorySync-linux-amd64 .
+          chmod +x bin/NexusRepositorySync-linux-amd64
+          tar -czf dist/NexusRepositorySync-linux-amd64.tar.gz \
+            -C bin NexusRepositorySync-linux-amd64
+          sha256sum dist/NexusRepositorySync-linux-amd64.tar.gz \
+            > dist/NexusRepositorySync-linux-amd64.tar.gz.sha256
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NexusRepositorySync-linux-amd64
+          path: |
+            dist/NexusRepositorySync-linux-amd64.tar.gz
+            dist/NexusRepositorySync-linux-amd64.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  build-windows:
+    name: Build (Windows AMD64)
+    needs: build-linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21.x"
+          cache: true
+
+      - name: Install Windows cross-compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes gcc-mingw-w64-x86-64
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build Windows executable
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: 1
+          CC: x86_64-w64-mingw32-gcc
+        run: |
+          mkdir -p dist
+          go build -trimpath \
+            -o dist/NexusRepositorySync-windows-amd64.exe .
+          sha256sum dist/NexusRepositorySync-windows-amd64.exe \
+            > dist/NexusRepositorySync-windows-amd64.exe.sha256
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NexusRepositorySync-windows-amd64
+          path: |
+            dist/NexusRepositorySync-windows-amd64.exe
+            dist/NexusRepositorySync-windows-amd64.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - build-linux
+      - build-windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: NexusRepositorySync-linux-amd64
+          path: dist
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: NexusRepositorySync-windows-amd64
+          path: dist
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes
+          fi
