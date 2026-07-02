@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type RepositoryFormat string
@@ -92,16 +93,45 @@ func GetLocalFilePath(repositoryName string, assetPath string) string {
 
 // CalculateFileSHA1 计算文件的 SHA1 值
 func CalculateFileSHA1(filePath string) (string, error) {
+	// 打开文件
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", err
 	}
 	defer file.Close()
 
+	// 创建 Hash 对象
 	hasher := sha1.New()
-	if _, err := io.Copy(hasher, file); err != nil {
-		return "", err
-	}
+
+	// 创建两个管道
+	pipeReader, pipeWriter := io.Pipe()
+
+	// 读取文件并写入到 pipeWriter 中
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer pipeWriter.Close()
+		_, err := io.Copy(pipeWriter, file)
+		if err != nil {
+			pipeWriter.CloseWithError(err)
+		}
+	}()
+
+	// 读取 pipeReader 并计算 Hash
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_, err := io.Copy(hasher, pipeReader)
+		if err != nil {
+			pipeReader.CloseWithError(err)
+		}
+	}()
+
+	// 等待两个 Goroutine 完成
+	wg.Wait()
+
+	// 转换 Hash 成字符串
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
