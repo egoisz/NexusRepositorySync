@@ -1,32 +1,70 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+name: Go CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: go-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-
   build:
+    name: Build and test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
-    - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.20'
-    - run: ls
-    - run: exit 2
-    - run: ls testrun
-    - run: ls
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21.x"
+          cache: true
 
-    # - name: Build
-    #   run: go build -v ./...
+      - name: Download dependencies
+        run: go mod download
 
-    # - name: Test
-    #   run: go test -v ./...
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Check formatting
+        shell: bash
+        run: |
+          files="$(gofmt -l .)"
+          if [ -n "$files" ]; then
+            echo "The following files are not formatted:"
+            echo "$files"
+            exit 1
+          fi
+
+      - name: Create CI configuration
+        shell: bash
+        run: |
+          cat > .config.yaml <<'YAML'
+          repositorySyncTask: []
+          timeStep: 60
+          port: 8080
+          dbPath: nexus-ci.db
+          downloadPath: download
+          mavenFileSuffix: []
+          YAML
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: Build
+        run: go build -trimpath -o bin/nexus-repository-sync .
